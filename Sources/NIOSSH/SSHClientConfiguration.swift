@@ -29,6 +29,9 @@ public struct SSHClientConfiguration {
     /// The enabled KeyExchangeAlgorithms
     public var keyExchangeAlgorithms: [NIOSSHKeyExchangeAlgorithmProtocol.Type] = SSHKeyExchangeStateMachine.bundledKeyExchangeImplementations
 
+    /// The maximum packet size that this NIOSSH client will accept
+    public var maximumPacketSize = SSHPacketParser.defaultMaximumPacketSize
+
     public init(userAuthDelegate: NIOSSHClientUserAuthenticationDelegate,
                 serverAuthDelegate: NIOSSHClientServerAuthenticationDelegate,
                 globalRequestDelegate: GlobalRequestDelegate? = nil) {

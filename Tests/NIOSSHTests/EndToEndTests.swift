@@ -415,7 +415,7 @@ class BackToBackEmbeddedChannel {
         try self.server.connect(to: .init(unixDomainSocketPath: "/fake")).wait()
     }
 
-    func configureWithHarness(_ harness: TestHarness) throws {
+    func configureWithHarness(_ harness: TestHarness, maximumPacketSize: Int? = nil) throws {
         var clientConfiguration = SSHClientConfiguration(userAuthDelegate: harness.clientAuthDelegate, serverAuthDelegate: harness.clientServerAuthDelegate, globalRequestDelegate: harness.clientGlobalRequestDelegate)
         var serverConfiguration = SSHServerConfiguration(hostKeys: harness.serverHostKeys, userAuthDelegate: harness.serverAuthDelegate, globalRequestDelegate: harness.serverGlobalRequestDelegate, banner: harness.serverAuthBanner)
         
@@ -482,7 +482,9 @@ struct TestHarness {
     var keyExchangeAlgorithms: [NIOSSHKeyExchangeAlgorithmProtocol.Type]?
 
     var transportProtectionAlgoritms: [NIOSSHTransportProtection.Type]?
-    
+
+    var maximumPacketSize: Int?
+
     var serverAuthBanner: SSHServerConfiguration.UserAuthBanner?
 }
 
@@ -594,6 +596,28 @@ class EndToEndTests: XCTestCase {
         helper(SSHChannelRequestEvent.SignalRequest(signal: "USR1"))
         helper(ChannelSuccessEvent())
         helper(ChannelFailureEvent())
+    }
+
+    /// This test validates that all the channel requests roiund-trip appropriately.
+    func testChannelRejectsHugePacketsRequests() throws {
+        XCTAssertNoThrow(try self.channel.configureWithHarness(TestHarness(), maximumPacketSize: 32768))
+        XCTAssertNoThrow(try self.channel.activate())
+        XCTAssertNoThrow(try self.channel.interactInMemory())
+
+        // Create a channel.
+        let clientChannel = try self.channel.createNewChannel()
+        XCTAssertNoThrow(try self.channel.interactInMemory())
+        guard let serverChannel = self.channel.activeServerChannels.first else {
+            XCTFail("Server channel not created")
+            return
+        }
+
+        let userEventRecorder = UserEventExpecter()
+        XCTAssertNoThrow(try serverChannel.pipeline.addHandler(userEventRecorder).wait())
+
+        let hugeCommand = String(repeating: "a", count: 32768)
+        try clientChannel.triggerUserOutboundEvent(SSHChannelRequestEvent.ExecRequest(command: hugeCommand, wantReply: true)).wait()
+        XCTAssertThrowsError(try self.channel.interactInMemory())
     }
 
     func testGlobalRequestWithDefaultDelegate() throws {

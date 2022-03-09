@@ -28,11 +28,11 @@ extension SSHConnectionStateMachine {
 
         private let allocator: ByteBufferAllocator
 
-        init(idleState state: IdleState, allocator: ByteBufferAllocator) {
+        init(idleState state: IdleState, allocator: ByteBufferAllocator, maximumPacketSize: Int) {
             self.role = state.role
             self.serializer = state.serializer
 
-            self.parser = SSHPacketParser(allocator: allocator)
+            self.parser = SSHPacketParser(allocator: allocator, maximumPacketSize: maximumPacketSize)
             self.allocator = allocator
         }
     }
