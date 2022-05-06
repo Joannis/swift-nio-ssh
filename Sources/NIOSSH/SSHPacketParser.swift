@@ -131,6 +131,10 @@ struct SSHPacketParser {
         var slice = self.buffer.readableBytesView
         while let lfIndex = slice.firstIndex(of: lineFeed), lfIndex < slice.endIndex {
             if slice.starts(with: "SSH-".utf8) {
+                guard slice.count <= Self.maximumAllowedVersionSize else {
+                    throw NIOSSHError.excessiveVersionLength
+                }
+                
                 // Return all data upto the last LF we found, excluding the last [CR]LF.
                 slice = self.buffer.readableBytesView
                 let versionEndIndex = slice[lfIndex.advanced(by: -1)] == carriageReturn ? lfIndex.advanced(by: -1) : lfIndex
