@@ -17,9 +17,9 @@ import NIO
 import NIOFoundationCompat
 
 public struct NIOSSHKeyExchangeServerReply {
-    let hostKey: NIOSSHPublicKey
-    let publicKey: ByteBuffer
-    let signature: NIOSSHSignature
+    public let hostKey: NIOSSHPublicKey
+    public let publicKey: ByteBuffer
+    public let signature: NIOSSHSignature
 }
 
 /// This protocol defines a container used by the key exchange state machine to manage key exchange.
