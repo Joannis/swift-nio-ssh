@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIO
+import NIOCore
 
 struct SSHPacketParser {
     enum State {
@@ -124,25 +124,21 @@ struct SSHPacketParser {
 
     internal static let maximumAllowedVersionSize = 4_096
     private mutating func readVersion() throws -> String? {
-        // Looking for a string ending with \r\n
-        let slice = self.buffer.readableBytesView
-        
-        // Prevent the consumed bytes for a version from exceeding the defined maximum allowed size
-        // In practice, if SSH version packets come anywhere near this it's already likely an attack
-        // More data cannot be blindly regarded as malicious though, since this might contain multiple packets
-        let maxIndex = slice.index(slice.startIndex, offsetBy: min(slice.count, Self.maximumAllowedVersionSize))
-        
-        for index in slice.startIndex ..< slice.endIndex {
-            if index > maxIndex {
-                // Does not account for `CRLF`
-                throw NIOSSHError.excessiveVersionLength
-            }
-            
-            if slice[index] == 13, index.advanced(by: 1) < slice.endIndex, slice[index.advanced(by: 1)] == 10 {
-                let version = String(decoding: slice[slice.startIndex ..< index], as: UTF8.self)
-                // read \r\n
-                self.buffer.moveReaderIndex(forwardBy: slice.startIndex.distance(to: index).advanced(by: 2))
+        let carriageReturn = UInt8(ascii: "\r")
+        let lineFeed = UInt8(ascii: "\n")
+
+        // Search for version line, which starts with "SSH-". Lines without this prefix may come before the version line.
+        var slice = self.buffer.readableBytesView
+        while let lfIndex = slice.firstIndex(of: lineFeed), lfIndex < slice.endIndex {
+            if slice.starts(with: "SSH-".utf8) {
+                // Return all data upto the last LF we found, excluding the last [CR]LF.
+                slice = self.buffer.readableBytesView
+                let versionEndIndex = slice[lfIndex.advanced(by: -1)] == carriageReturn ? lfIndex.advanced(by: -1) : lfIndex
+                let version = String(decoding: slice[slice.startIndex ..< versionEndIndex], as: UTF8.self)
+                self.buffer.moveReaderIndex(forwardBy: slice.startIndex.distance(to: lfIndex).advanced(by: 1))
                 return version
+            } else {
+                slice = slice[slice.index(after: lfIndex)...]
             }
         }
         
