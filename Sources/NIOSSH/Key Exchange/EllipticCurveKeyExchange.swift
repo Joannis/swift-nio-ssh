@@ -13,13 +13,19 @@
 //===----------------------------------------------------------------------===//
 
 import Crypto
-import NIO
+import NIOCore
 import NIOFoundationCompat
 
 public struct NIOSSHKeyExchangeServerReply {
-    public let hostKey: NIOSSHPublicKey
-    public let publicKey: ByteBuffer
-    public let signature: NIOSSHSignature
+    public var hostKey: NIOSSHPublicKey
+    public var publicKey: ByteBuffer
+    public var signature: NIOSSHSignature
+    
+    public init(hostKey: NIOSSHPublicKey, publicKey: ByteBuffer, signature: NIOSSHSignature) {
+        self.hostKey = hostKey
+        self.publicKey = publicKey
+        self.signature = signature
+    }
 }
 
 /// This protocol defines a container used by the key exchange state machine to manage key exchange.
@@ -50,7 +56,7 @@ public protocol NIOSSHKeyExchangeAlgorithmProtocol {
     static var keyExchangeAlgorithmNames: [Substring] { get }
 }
 
-struct EllipticCurveKeyExchange<PrivateKey: ECDHCompatiblePrivateKey>:  NIOSSHKeyExchangeAlgorithmProtocol {
+struct EllipticCurveKeyExchange<PrivateKey: ECDHCompatiblePrivateKey>: NIOSSHKeyExchangeAlgorithmProtocol {
     private var previousSessionIdentifier: ByteBuffer?
     private var ourKey: PrivateKey
     private var theirKey: PrivateKey.PublicKey?
@@ -138,7 +144,7 @@ extension EllipticCurveKeyExchange {
         expectedKeySizes: ExpectedKeySizes
     ) throws -> KeyExchangeResult {
         precondition(self.ourRole.isClient, "Only clients may receive a server key exchange packet!")
-        
+
         // Ok, we have a few steps here. Firstly, we need to extract the server's public key and generate our shared
         // secret. Then we need to validate that we didn't generate a weak shared secret (possible under some cases),
         // as this must fail the key exchange process.

@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIO
+import NIOCore
 @testable import NIOSSH
 import XCTest
 
@@ -49,6 +49,63 @@ final class SSHPacketParserTests: XCTestCase {
         switch try parser.nextPacket() {
         case .version(let string):
             XCTAssertEqual(string, "SSH-2.0-OpenSSH_7.9")
+        default:
+            XCTFail("Expecting .version")
+        }
+    }
+
+    func testReadVersionWithExtraLines() throws {
+        var parser = SSHPacketParser(allocator: ByteBufferAllocator())
+
+        var part1 = ByteBuffer.of(string: "xxxx\r\nyyyy\r\nSSH-2.0-")
+        parser.append(bytes: &part1)
+
+        XCTAssertNil(try parser.nextPacket())
+
+        var part2 = ByteBuffer.of(string: "OpenSSH_7.9\r\n")
+        parser.append(bytes: &part2)
+
+        switch try parser.nextPacket() {
+        case .version(let string):
+            XCTAssertEqual(string, "xxxx\r\nyyyy\r\nSSH-2.0-OpenSSH_7.9")
+        default:
+            XCTFail("Expecting .version")
+        }
+    }
+
+    func testReadVersionWithoutCarriageReturn() throws {
+        var parser = SSHPacketParser(allocator: ByteBufferAllocator())
+
+        var part1 = ByteBuffer.of(string: "SSH-2.0-")
+        parser.append(bytes: &part1)
+
+        XCTAssertNil(try parser.nextPacket())
+
+        var part2 = ByteBuffer.of(string: "OpenSSH_7.4\n")
+        parser.append(bytes: &part2)
+
+        switch try parser.nextPacket() {
+        case .version(let string):
+            XCTAssertEqual(string, "SSH-2.0-OpenSSH_7.4")
+        default:
+            XCTFail("Expecting .version")
+        }
+    }
+
+    func testReadVersionWithExtraLinesWithoutCarriageReturn() throws {
+        var parser = SSHPacketParser(allocator: ByteBufferAllocator())
+
+        var part1 = ByteBuffer.of(string: "xxxx\nyyyy\nSSH-2.0-")
+        parser.append(bytes: &part1)
+
+        XCTAssertNil(try parser.nextPacket())
+
+        var part2 = ByteBuffer.of(string: "OpenSSH_7.4\n")
+        parser.append(bytes: &part2)
+
+        switch try parser.nextPacket() {
+        case .version(let string):
+            XCTAssertEqual(string, "xxxx\nyyyy\nSSH-2.0-OpenSSH_7.4")
         default:
             XCTFail("Expecting .version")
         }
@@ -141,6 +198,15 @@ final class SSHPacketParserTests: XCTestCase {
 
         // Now we should have cleared up.
         XCTAssertEqual(parser._discardableBytes, 0)
+    }
+
+    func testMaximumPacketSizeInVersion() throws {
+        var parser = SSHPacketParser(allocator: ByteBufferAllocator(), maximumPacketSize: 1 << 15)
+        let longVersionString = String(repeating: "z", count: SSHPacketParser.maximumAllowedVersionSize + 256)
+        var version = ByteBuffer.of(string: longVersionString + "\r\n")
+        parser.append(bytes: &version)
+
+        XCTAssertThrowsError(try parser.nextPacket())
     }
 }
 

@@ -14,7 +14,12 @@
 
 import Crypto
 import Dispatch
-import NIO
+import NIOCore
+#if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
+import Darwin
+#else
+import Glibc
+#endif // os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
 
 /// A `NIOSSHCertifiedPublicKey` is an SSH public key combined with an SSH certificate.
 ///
@@ -316,7 +321,6 @@ extension NIOSSHCertifiedPublicKey {
     static let p521KeyPrefix = "ecdsa-sha2-nistp521-cert-v01@openssh.com".utf8
 
     static let ed25519KeyPrefix = "ssh-ed25519-cert-v01@openssh.com".utf8
-    static let rsaKeyPrefix = "ssh-rsa".utf8
 
     internal var keyPrefix: String.UTF8View {
         switch self.key.backingKey {

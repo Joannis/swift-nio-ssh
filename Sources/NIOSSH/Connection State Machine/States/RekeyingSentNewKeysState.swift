@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIO
+import NIOCore
 
 extension SSHConnectionStateMachine {
     /// The state of a state machine that has sent new keys after a key exchange operation from an active channel,
@@ -29,8 +29,6 @@ extension SSHConnectionStateMachine {
 
         var remoteVersion: String
 
-        var protectionSchemes: [NIOSSHTransportProtection.Type]
-
         var sessionIdentifier: ByteBuffer
 
         /// The backing state machine.
@@ -41,7 +39,6 @@ extension SSHConnectionStateMachine {
             self.parser = previousState.parser
             self.serializer = previousState.serializer
             self.remoteVersion = previousState.remoteVersion
-            self.protectionSchemes = previousState.protectionSchemes
             self.sessionIdentifier = previousState.sessionIdentifier
             self.keyExchangeStateMachine = previousState.keyExchangeStateMachine
         }

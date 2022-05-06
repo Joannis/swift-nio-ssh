@@ -13,7 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 import Crypto
-import NIO
+import NIOCore
+import NIOEmbedded
 @testable import NIOSSH
 import XCTest
 
@@ -415,11 +416,24 @@ class BackToBackEmbeddedChannel {
         try self.server.connect(to: .init(unixDomainSocketPath: "/fake")).wait()
     }
 
-    func configureWithHarness(_ harness: TestHarness) throws {
-        let clientHandler = NIOSSHHandler(role: .client(.init(userAuthDelegate: harness.clientAuthDelegate, serverAuthDelegate: harness.clientServerAuthDelegate, globalRequestDelegate: harness.clientGlobalRequestDelegate)),
+    func configureWithHarness(_ harness: TestHarness, maximumPacketSize: Int? = nil) throws {
+        var clientConfiguration = SSHClientConfiguration(userAuthDelegate: harness.clientAuthDelegate, serverAuthDelegate: harness.clientServerAuthDelegate, globalRequestDelegate: harness.clientGlobalRequestDelegate)
+        var serverConfiguration = SSHServerConfiguration(hostKeys: harness.serverHostKeys, userAuthDelegate: harness.serverAuthDelegate, globalRequestDelegate: harness.serverGlobalRequestDelegate, banner: harness.serverAuthBanner)
+        
+        if let transportProtectionAlgoritms = harness.transportProtectionAlgoritms {
+            clientConfiguration.transportProtectionSchemes = transportProtectionAlgoritms
+            serverConfiguration.transportProtectionSchemes = transportProtectionAlgoritms
+        }
+        
+        if let keyExchangeAlgorithms = harness.keyExchangeAlgorithms {
+            clientConfiguration.keyExchangeAlgorithms = keyExchangeAlgorithms
+            serverConfiguration.keyExchangeAlgorithms = keyExchangeAlgorithms
+        }
+        
+        let clientHandler = NIOSSHHandler(role: .client(clientConfiguration),
                                           allocator: self.client.allocator,
                                           inboundChildChannelInitializer: nil)
-        let serverHandler = NIOSSHHandler(role: .server(.init(hostKeys: harness.serverHostKeys, userAuthDelegate: harness.serverAuthDelegate, globalRequestDelegate: harness.serverGlobalRequestDelegate, banner: harness.serverAuthBanner)),
+        let serverHandler = NIOSSHHandler(role: .server(serverConfiguration),
                                           allocator: self.server.allocator) { channel, _ in
             self.activeServerChannels.append(channel)
             channel.closeFuture.whenComplete { _ in self.activeServerChannels.removeAll(where: { $0 === channel }) }
@@ -465,6 +479,12 @@ struct TestHarness {
     var serverGlobalRequestDelegate: GlobalRequestDelegate?
 
     var serverHostKeys: [NIOSSHPrivateKey] = [.init(ed25519Key: .init())]
+    
+    var keyExchangeAlgorithms: [NIOSSHKeyExchangeAlgorithmProtocol.Type]?
+
+    var transportProtectionAlgoritms: [NIOSSHTransportProtection.Type]?
+
+    var maximumPacketSize: Int?
 
     var serverAuthBanner: SSHServerConfiguration.UserAuthBanner?
 }
@@ -577,6 +597,28 @@ class EndToEndTests: XCTestCase {
         helper(SSHChannelRequestEvent.SignalRequest(signal: "USR1"))
         helper(ChannelSuccessEvent())
         helper(ChannelFailureEvent())
+    }
+
+    /// This test validates that all the channel requests roiund-trip appropriately.
+    func testChannelRejectsHugePacketsRequests() throws {
+        XCTAssertNoThrow(try self.channel.configureWithHarness(TestHarness(), maximumPacketSize: 32768))
+        XCTAssertNoThrow(try self.channel.activate())
+        XCTAssertNoThrow(try self.channel.interactInMemory())
+
+        // Create a channel.
+        let clientChannel = try self.channel.createNewChannel()
+        XCTAssertNoThrow(try self.channel.interactInMemory())
+        guard let serverChannel = self.channel.activeServerChannels.first else {
+            XCTFail("Server channel not created")
+            return
+        }
+
+        let userEventRecorder = UserEventExpecter()
+        XCTAssertNoThrow(try serverChannel.pipeline.addHandler(userEventRecorder).wait())
+
+        let hugeCommand = String(repeating: "a", count: 32768)
+        try clientChannel.triggerUserOutboundEvent(SSHChannelRequestEvent.ExecRequest(command: hugeCommand, wantReply: true)).wait()
+        XCTAssertThrowsError(try self.channel.interactInMemory())
     }
 
     func testGlobalRequestWithDefaultDelegate() throws {
@@ -773,8 +815,9 @@ class EndToEndTests: XCTestCase {
     }
     
     func testCustomPublicKeyAlgorithms() throws {
+        NIOSSHAlgorithms.unregisterAlgorithms()
         CustomPublicKey.wasUsed = false
-        NIOSSHAlgoritms.register(publicKey: CustomPublicKey.self, signature: CustomSignature.self)
+        NIOSSHAlgorithms.register(publicKey: CustomPublicKey.self, signature: CustomSignature.self)
         
         // If we can't create this key, we skip the test.
         let hostKey = NIOSSHPrivateKey(ed25519Key: .init())
@@ -798,8 +841,9 @@ class EndToEndTests: XCTestCase {
     }
     
     func testCustomHostKeyAlgorithms() throws {
+        NIOSSHAlgorithms.unregisterAlgorithms()
         CustomPublicKey.wasUsed = false
-        NIOSSHAlgoritms.register(publicKey: CustomPublicKey.self, signature: CustomSignature.self)
+        NIOSSHAlgorithms.register(publicKey: CustomPublicKey.self, signature: CustomSignature.self)
         
         // If we can't create this key, we skip the test.
         let hostKey = NIOSSHPrivateKey(custom: CustomPrivateKey())
@@ -823,15 +867,9 @@ class EndToEndTests: XCTestCase {
     }
     
     func testCustomTransportProtectionAlgorithms() throws {
-        let originalTransportProtectionSchemes = SSHConnectionStateMachine.defaultTransportProtectionSchemes
-        SSHConnectionStateMachine.defaultTransportProtectionSchemes = []
-        defer {
-            SSHConnectionStateMachine.defaultTransportProtectionSchemes = originalTransportProtectionSchemes
-        }
-        
+        NIOSSHAlgorithms.unregisterAlgorithms()
         CustomKeyExchange.wasUsed = false
-        NIOSSHAlgoritms.register(transportProtectionScheme: CustomTransportProtection.self)
-        XCTAssertEqual(SSHConnectionStateMachine.defaultTransportProtectionSchemes.count, 1)
+        NIOSSHAlgorithms.register(transportProtectionScheme: CustomTransportProtection.self)
         
         // If we can't create this key, we skip the test.
         let hostKey = NIOSSHPrivateKey(ed25519Key: .init())
@@ -839,6 +877,7 @@ class EndToEndTests: XCTestCase {
 
         // We use the Secure Enclave keys for everything, just because we can.
         var harness = TestHarness()
+        harness.transportProtectionAlgoritms = [CustomTransportProtection.self]
         harness.serverHostKeys = [hostKey]
         harness.clientAuthDelegate = PrivateKeyClientAuth(clientAuthKey)
         harness.serverAuthDelegate = ExpectPublicKeyAuth(clientAuthKey.publicKey)
@@ -855,16 +894,10 @@ class EndToEndTests: XCTestCase {
     }
     
     func testCustomKeyExchangeAlgorithms() throws {
-        let originalSSHKeyExchangeAlgorithms = SSHKeyExchangeStateMachine.supportedKeyExchangeImplementations
-        SSHKeyExchangeStateMachine.supportedKeyExchangeImplementations = []
-        defer {
-            SSHKeyExchangeStateMachine.supportedKeyExchangeImplementations = originalSSHKeyExchangeAlgorithms
-        }
-        
+        NIOSSHAlgorithms.unregisterAlgorithms()
         CustomKeyExchange.wasUsed = false
-        NIOSSHAlgoritms.register(keyExchangeAlgorithm: CustomKeyExchange.self)
-        NIOSSHAlgoritms.register(publicKey: CustomPublicKey.self, signature: CustomSignature.self)
-        XCTAssertEqual(SSHKeyExchangeStateMachine.supportedKeyExchangeAlgorithms.count, 1)
+        NIOSSHAlgorithms.register(keyExchangeAlgorithm: CustomKeyExchange.self)
+        NIOSSHAlgorithms.register(publicKey: CustomPublicKey.self, signature: CustomSignature.self)
         
         // If we can't create this key, we skip the test.
         let hostKey = NIOSSHPrivateKey(custom: CustomPrivateKey())
@@ -872,6 +905,7 @@ class EndToEndTests: XCTestCase {
 
         // We use the Secure Enclave keys for everything, just because we can.
         var harness = TestHarness()
+        harness.keyExchangeAlgorithms = [CustomKeyExchange.self]
         harness.serverHostKeys = [hostKey]
         harness.clientAuthDelegate = PrivateKeyClientAuth(clientAuthKey)
         harness.serverAuthDelegate = ExpectPublicKeyAuth(clientAuthKey.publicKey)

@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIO
+import NIOCore
 
 extension SSHConnectionStateMachine {
     /// The state of a state machine that has sent new keys after a key exchange operation,
@@ -29,8 +29,6 @@ extension SSHConnectionStateMachine {
 
         var remoteVersion: String
 
-        var protectionSchemes: [NIOSSHTransportProtection.Type]
-
         var sessionIdentifier: ByteBuffer
 
         /// The backing state machine.
@@ -46,7 +44,6 @@ extension SSHConnectionStateMachine {
             self.serializer = state.serializer
             self.keyExchangeStateMachine = state.keyExchangeStateMachine
             self.remoteVersion = state.remoteVersion
-            self.protectionSchemes = state.protectionSchemes
 
             // We force unwrap the session ID here because it's programmer error to not have it at this stage.
             self.sessionIdentifier = self.keyExchangeStateMachine.sessionID!

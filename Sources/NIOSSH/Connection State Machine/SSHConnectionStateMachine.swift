@@ -12,7 +12,7 @@
 //
 //===----------------------------------------------------------------------===//
 
-import NIO
+import NIOCore
 
 struct SSHConnectionStateMachine {
     enum State {
@@ -60,12 +60,12 @@ struct SSHConnectionStateMachine {
     /// The state of this state machine.
     private var state: State
 
-    internal static var defaultTransportProtectionSchemes: [NIOSSHTransportProtection.Type] = [
+    static let bundledTransportProtectionSchemes: [NIOSSHTransportProtection.Type] = [
         AES256GCMOpenSSHTransportProtection.self, AES128GCMOpenSSHTransportProtection.self,
     ]
 
-    init(role: SSHConnectionRole, protectionSchemes: [NIOSSHTransportProtection.Type] = Self.defaultTransportProtectionSchemes) {
-        self.state = .idle(IdleState(role: role, protectionSchemes: protectionSchemes))
+    init(role: SSHConnectionRole) {
+        self.state = .idle(IdleState(role: role))
     }
 
     func start() -> SSHMultiMessage? {
@@ -152,6 +152,7 @@ struct SSHConnectionStateMachine {
             }
         case .keyExchange(var state):
             guard let message = try state.parser.nextPacket() else {
+                self.state = .keyExchange(state)
                 return nil
             }
 
@@ -203,6 +204,7 @@ struct SSHConnectionStateMachine {
             }
         case .sentNewKeys(var state):
             guard let message = try state.parser.nextPacket() else {
+                self.state = .sentNewKeys(state)
                 return nil
             }
 
@@ -257,6 +259,7 @@ struct SSHConnectionStateMachine {
             // In this state we tolerate receiving service request messages. As we haven't sent newKeys, we cannot
             // send any user auth messages yet, so by definition we can't receive any other user auth message.
             guard let message = try state.parser.nextPacket() else {
+                self.state = .receivedNewKeys(state)
                 return nil
             }
 
@@ -288,6 +291,7 @@ struct SSHConnectionStateMachine {
         case .userAuthentication(var state):
             // In this state we tolerate receiving user auth messages.
             guard let message = try state.parser.nextPacket() else {
+                self.state = .userAuthentication(state)
                 return nil
             }
 
@@ -306,7 +310,7 @@ struct SSHConnectionStateMachine {
                 let result = try state.receiveUserAuthRequest(message)
                 self.state = .userAuthentication(state)
                 return result
-                
+
             case .userAuthSuccess:
                 let result = try state.receiveUserAuthSuccess()
                 // Hey, auth succeeded!
@@ -341,6 +345,7 @@ struct SSHConnectionStateMachine {
 
         case .active(var state):
             guard let message = try state.parser.nextPacket() else {
+                self.state = .active(state)
                 return nil
             }
 
@@ -406,6 +411,7 @@ struct SSHConnectionStateMachine {
             // We've received a key exchange packet. We only expect the first two messages (key exchange and key exchange init) before
             // we have sent a reply.
             guard let message = try state.parser.nextPacket() else {
+                self.state = .receivedKexInitWhenActive(state)
                 return nil
             }
 
@@ -450,6 +456,7 @@ struct SSHConnectionStateMachine {
         case .sentKexInitWhenActive(var state):
             // We've sent a key exchange packet. We expect channel messages _or_ a kexinit packet.
             guard let message = try state.parser.nextPacket() else {
+                self.state = .sentKexInitWhenActive(state)
                 return nil
             }
 
@@ -513,6 +520,7 @@ struct SSHConnectionStateMachine {
         case .rekeying(var state):
             // This is basically the regular key exchange state.
             guard let message = try state.parser.nextPacket() else {
+                self.state = .rekeying(state)
                 return nil
             }
 
@@ -566,6 +574,7 @@ struct SSHConnectionStateMachine {
         case .rekeyingReceivedNewKeysState(var state):
             // This is basically a regular active state.
             guard let message = try state.parser.nextPacket() else {
+                self.state = .rekeyingReceivedNewKeysState(state)
                 return nil
             }
 
@@ -626,6 +635,7 @@ struct SSHConnectionStateMachine {
         case .rekeyingSentNewKeysState(var state):
             // This is key exchange state.
             guard let message = try state.parser.nextPacket() else {
+                self.state = .rekeyingSentNewKeysState(state)
                 return nil
             }
 
@@ -692,7 +702,7 @@ struct SSHConnectionStateMachine {
             switch message {
             case .version:
                 try state.serializer.serialize(message: message, to: &buffer)
-                self.state = .sentVersion(.init(idleState: state, allocator: allocator))
+                self.state = .sentVersion(.init(idleState: state, allocator: allocator, maximumPacketSize: state.role.maximumPacketSize))
             case .disconnect:
                 try state.serializer.serialize(message: message, to: &buffer)
                 self.state = .sentDisconnect(state.role)
@@ -819,7 +829,7 @@ struct SSHConnectionStateMachine {
             case .userAuthRequest(let message):
                 try state.writeUserAuthRequest(message, into: &buffer)
                 self.state = .userAuthentication(state)
-                
+
             case .userAuthSuccess:
                 try state.writeUserAuthSuccess(into: &buffer)
                 // Ok we're good to go!
