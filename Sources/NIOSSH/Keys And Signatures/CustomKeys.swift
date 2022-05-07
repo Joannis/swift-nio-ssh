@@ -62,7 +62,7 @@ public protocol NIOSSHPrivateKeyProtocol {
     static var keyPrefix: String { get }
     
     /// A public key instance that is able to verify signatures that are created using this private key.
-    var publicKey: NIOSSHPublicKeyProtocol { get }
+    var nioSshPublicKey: NIOSSHPublicKeyProtocol { get }
     
     /// Creates a signature, proving that `data` has been sent by the holder of this private key, and can be verified by `publicKey`.
     func signature<D: DataProtocol>(for data: D) throws -> NIOSSHSignatureProtocol

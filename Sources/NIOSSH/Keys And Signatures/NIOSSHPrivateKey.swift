@@ -170,7 +170,7 @@ extension NIOSSHPrivateKey {
         case .ecdsaP521(let privateKey):
             return NIOSSHPublicKey(backingKey: .ecdsaP521(privateKey.publicKey))
         case .custom(let privateKey):
-            return NIOSSHPublicKey(backingKey: .custom(privateKey.publicKey))
+            return NIOSSHPublicKey(backingKey: .custom(privateKey.nioSshPublicKey))
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         case .secureEnclaveP256(let privateKey):
             return NIOSSHPublicKey(backingKey: .ecdsaP256(privateKey.publicKey))

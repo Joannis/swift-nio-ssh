@@ -152,7 +152,7 @@ final class CustomTransportProtection: NIOSSHTransportProtection {
 struct CustomPrivateKey: NIOSSHPrivateKeyProtocol {
     static let keyPrefix = "custom-prefix"
     
-    var publicKey: NIOSSHPublicKeyProtocol {
+    var nioSshPublicKey: NIOSSHPublicKeyProtocol {
         CustomPublicKey()
     }
     
@@ -244,7 +244,7 @@ struct CustomKeyExchange: NIOSSHKeyExchangeAlgorithmProtocol {
 
     func initiateKeyExchangeClientSide(allocator: ByteBufferAllocator) -> ByteBuffer {
         var buffer = ByteBuffer()
-        _ = ourKey.publicKey.write(to: &buffer)
+        _ = ourKey.nioSshPublicKey.write(to: &buffer)
         return buffer
     }
 
@@ -295,7 +295,7 @@ struct CustomKeyExchange: NIOSSHKeyExchangeAlgorithmProtocol {
         )
         
         var publicKeyBytes = allocator.buffer(capacity: 256)
-        _ = self.ourKey.publicKey.write(to: &publicKeyBytes)
+        _ = self.ourKey.nioSshPublicKey.write(to: &publicKeyBytes)
         
         let exchangeHashSignature = try serverHostKey.sign(digest: exchangeHash)
         
