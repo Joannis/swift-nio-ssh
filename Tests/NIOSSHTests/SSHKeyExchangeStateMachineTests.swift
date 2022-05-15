@@ -1013,14 +1013,15 @@ final class SSHKeyExchangeStateMachineTests: XCTestCase {
     }
 }
 
-extension SSHKeyExchangeStateMachineTests {
+private extension SSHKeyExchangeStateMachineTests {
     /// A simple function that passes a message to the state machine and erases the return value.
-    fileprivate func handleUnexpectedMessageErasingValue(_ message: SSHMessage,
-                                                         allowedStages: SSHKeyExchangeStateMachineTests.HandshakeStages,
-                                                         currentStage: SSHKeyExchangeStateMachineTests.HandshakeStages,
-                                                         stateMachine: inout SSHKeyExchangeStateMachine,
-                                                         file: StaticString = #file,
-                                                         line: UInt = #line) throws {
+    func handleUnexpectedMessageErasingValue(_ message: SSHMessage,
+                                             allowedStages: SSHKeyExchangeStateMachineTests.HandshakeStages,
+                                             currentStage: SSHKeyExchangeStateMachineTests.HandshakeStages,
+                                             stateMachine: inout SSHKeyExchangeStateMachine,
+                                             file: StaticString = #file,
+                                             line: UInt = #line) throws
+    {
         if allowedStages.contains(currentStage) {
             // If this stage is allowed, don't try to send the message. Assume it's covered in the mainline.
             return

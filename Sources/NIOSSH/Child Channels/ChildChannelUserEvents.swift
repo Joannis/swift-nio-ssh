@@ -64,7 +64,8 @@ public enum SSHChannelRequestEvent {
                     terminalRowHeight: Int,
                     terminalPixelWidth: Int,
                     terminalPixelHeight: Int,
-                    terminalModes: SSHTerminalModes) {
+                    terminalModes: SSHTerminalModes)
+        {
             self = .init(wantReply: wantReply,
                          term: term,
                          terminalCharacterWidth: UInt32(terminalCharacterWidth),
@@ -80,7 +81,8 @@ public enum SSHChannelRequestEvent {
                       terminalRowHeight: UInt32,
                       terminalPixelWidth: UInt32,
                       terminalPixelHeight: UInt32,
-                      terminalModes: SSHTerminalModes) {
+                      terminalModes: SSHTerminalModes)
+        {
             self.wantReply = wantReply
             self.term = term
             self._terminalCharacterWidth = terminalCharacterWidth
@@ -243,7 +245,8 @@ public enum SSHChannelRequestEvent {
         public init(terminalCharacterWidth: Int,
                     terminalRowHeight: Int,
                     terminalPixelWidth: Int,
-                    terminalPixelHeight: Int) {
+                    terminalPixelHeight: Int)
+        {
             self = .init(terminalCharacterWidth: UInt32(terminalCharacterWidth),
                          terminalRowHeight: UInt32(terminalRowHeight),
                          terminalPixelWidth: UInt32(terminalPixelWidth),
@@ -253,7 +256,8 @@ public enum SSHChannelRequestEvent {
         internal init(terminalCharacterWidth: UInt32,
                       terminalRowHeight: UInt32,
                       terminalPixelWidth: UInt32,
-                      terminalPixelHeight: UInt32) {
+                      terminalPixelHeight: UInt32)
+        {
             self._terminalCharacterWidth = terminalCharacterWidth
             self._terminalRowHeight = terminalRowHeight
             self._terminalPixelWidth = terminalPixelWidth
@@ -299,7 +303,7 @@ extension SSHChannelRequestEvent {
     /// Constructs a channel request event and wraps it up in an Any.
     ///
     /// This is usually used just prior to firing this into the pipeline.
-    internal static func fromMessage(_ message: SSHMessage.ChannelRequestMessage) -> Any? {
+    static func fromMessage(_ message: SSHMessage.ChannelRequestMessage) -> Any? {
         switch message.type {
         case .env(let name, let value):
             return EnvironmentRequest(wantReply: message.wantReply, name: name, value: value) as Any

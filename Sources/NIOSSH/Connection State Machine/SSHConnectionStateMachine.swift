@@ -123,7 +123,8 @@ struct SSHConnectionStateMachine {
     }
 
     mutating func processInboundMessage(allocator: ByteBufferAllocator,
-                                        loop: EventLoop) throws -> StateMachineInboundProcessResult? {
+                                        loop: EventLoop) throws -> StateMachineInboundProcessResult?
+    {
         switch self.state {
         case .idle:
             preconditionFailure("Received messages before sending our first message.")
@@ -182,7 +183,7 @@ struct SSHConnectionStateMachine {
                 return .noMessage
             case .unimplemented(let unimplemented):
                 throw NIOSSHError.remotePeerDoesNotSupportMessage(unimplemented)
-                
+
             default:
                 // TODO: enforce RFC 4253:
                 //
@@ -696,7 +697,8 @@ struct SSHConnectionStateMachine {
     mutating func processOutboundMessage(_ message: SSHMessage,
                                          buffer: inout ByteBuffer,
                                          allocator: ByteBufferAllocator,
-                                         loop: EventLoop) throws {
+                                         loop: EventLoop) throws
+    {
         switch self.state {
         case .idle(var state):
             switch message {

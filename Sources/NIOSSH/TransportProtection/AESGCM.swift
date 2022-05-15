@@ -42,7 +42,8 @@ internal class AESGCMTransportProtection {
 
     required init(initialKeys: NIOSSHSessionKeys) throws {
         guard initialKeys.outboundEncryptionKey.bitCount == Self.keySizes.encryptionKeySize * 8,
-            initialKeys.inboundEncryptionKey.bitCount == Self.keySizes.encryptionKeySize * 8 else {
+              initialKeys.inboundEncryptionKey.bitCount == Self.keySizes.encryptionKeySize * 8
+        else {
             throw NIOSSHError.invalidKeySize
         }
 
@@ -64,7 +65,8 @@ extension AESGCMTransportProtection: NIOSSHTransportProtection {
 
     func updateKeys(_ newKeys: NIOSSHSessionKeys) throws {
         guard newKeys.outboundEncryptionKey.bitCount == Self.keySizes.encryptionKeySize * 8,
-            newKeys.inboundEncryptionKey.bitCount == Self.keySizes.encryptionKeySize * 8 else {
+              newKeys.inboundEncryptionKey.bitCount == Self.keySizes.encryptionKeySize * 8
+        else {
             throw NIOSSHError.invalidKeySize
         }
 
@@ -87,9 +89,10 @@ extension AESGCMTransportProtection: NIOSSHTransportProtection {
             // The first 4 bytes are the length. The last 16 are the tag. Everything else is ciphertext. We expect
             // that the ciphertext is a clean multiple of the block size, and to be non-zero.
             guard let lengthView = source.readSlice(length: 4)?.readableBytesView,
-                let ciphertextView = source.readSlice(length: source.readableBytes - 16)?.readableBytesView,
-                let tagView = source.readSlice(length: 16)?.readableBytesView,
-                ciphertextView.count > 0, ciphertextView.count % Self.cipherBlockSize == 0 else {
+                  let ciphertextView = source.readSlice(length: source.readableBytes - 16)?.readableBytesView,
+                  let tagView = source.readSlice(length: 16)?.readableBytesView,
+                  ciphertextView.count > 0, ciphertextView.count % Self.cipherBlockSize == 0
+            else {
                 // The only way this fails is if the payload doesn't match this encryption scheme.
                 throw NIOSSHError.invalidEncryptedPacketLength
             }
@@ -343,19 +346,19 @@ extension SSHAESGCMNonce: DataProtocol {
     }
 }
 
-extension ByteBuffer {
+private extension ByteBuffer {
     /// Prepends the given Data to this ByteBuffer.
     ///
     /// Will crash if there isn't space in the front of this buffer, so please ensure there is!
-    fileprivate mutating func prependData(_ data: Data) {
+    mutating func prependData(_ data: Data) {
         self.moveReaderIndex(to: self.readerIndex - data.count)
         self.setContiguousBytes(data, at: self.readerIndex)
     }
 }
 
-extension Data {
+private extension Data {
     /// Removes the padding bytes from a Data object.
-    fileprivate mutating func removePaddingBytes() throws {
+    mutating func removePaddingBytes() throws {
         guard let paddingLength = self.first, paddingLength >= 4 else {
             throw NIOSSHError.insufficientPadding
         }

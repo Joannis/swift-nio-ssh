@@ -212,7 +212,8 @@ public struct NIOSSHCertifiedPublicKey {
                 criticalOptions: [String: String],
                 extensions: [String: String],
                 signatureKey: NIOSSHPublicKey,
-                signature: NIOSSHSignature) throws {
+                signature: NIOSSHSignature) throws
+    {
         self.backing = try Backing(nonce: nonce,
                                    serial: serial,
                                    type: type,
@@ -269,7 +270,8 @@ extension NIOSSHCertifiedPublicKey {
     public func validate(principal: String,
                          type: CertificateType,
                          allowedAuthoritySigningKeys: [NIOSSHPublicKey],
-                         acceptableCriticalOptions: [String] = []) throws -> [String: String] {
+                         acceptableCriticalOptions: [String] = []) throws -> [String: String]
+    {
         // Before we do any computation on values in this certificate, we first need to do the cryptographic
         // validation, to avoid the cryptographic doom principle. First, check if the signing key is in our allowed
         // set: second, validate the signature.
@@ -389,7 +391,7 @@ extension NIOSSHCertifiedPublicKey: CustomDebugStringConvertible {
     }
 }
 
-extension NIOSSHCertifiedPublicKey {
+public extension NIOSSHCertifiedPublicKey {
     /// A `NIOSSHCertifiedPublicKey.CertificateType` defines the type of a given certificate.
     ///
     /// In SSH there are essentially two types in standard use: `.user` and `.host`. Certificates of type
@@ -397,7 +399,7 @@ extension NIOSSHCertifiedPublicKey {
     ///
     /// For extensibility purposes this is not defined as an enumeration, but instead as a `RawRepresentable` type
     /// wrapping the base type.
-    public struct CertificateType: RawRepresentable {
+    struct CertificateType: RawRepresentable {
         public var rawValue: UInt32
 
         public init(rawValue: UInt32) {
@@ -485,7 +487,8 @@ extension NIOSSHCertifiedPublicKey {
                          criticalOptions: [String: String],
                          extensions: [String: String],
                          signatureKey: NIOSSHPublicKey,
-                         signature: NIOSSHSignature) throws {
+                         signature: NIOSSHSignature) throws
+        {
             // These two contrains are _very important_: without them, a number of NIOSSHPublicKey operations become infinitely
             // recursive.
             if case .certified = key.backingKey {
@@ -535,7 +538,7 @@ extension NIOSSHCertifiedPublicKey {
 
 extension NIOSSHCertifiedPublicKey.Backing: Hashable {
     static func == (lhs: NIOSSHCertifiedPublicKey.Backing, rhs: NIOSSHCertifiedPublicKey.Backing) -> Bool {
-        (lhs.nonce == rhs.nonce &&
+        lhs.nonce == rhs.nonce &&
             lhs.serial == rhs.serial &&
             lhs.type == rhs.type &&
             lhs.key == rhs.key &&
@@ -546,7 +549,7 @@ extension NIOSSHCertifiedPublicKey.Backing: Hashable {
             lhs.criticalOptions == rhs.criticalOptions &&
             lhs.extensions == rhs.extensions &&
             lhs.signatureKey == rhs.signatureKey &&
-            lhs.signature == rhs.signature)
+            lhs.signature == rhs.signature
     }
 
     func hash(into hasher: inout Hasher) {

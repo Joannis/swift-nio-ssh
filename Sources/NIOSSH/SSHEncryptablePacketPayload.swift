@@ -29,9 +29,9 @@ public struct NIOSSHEncryptablePayload {
     }
 }
 
-extension ByteBuffer {
+public extension ByteBuffer {
     /// Write an encryptable payload to this `ByteBuffer`.
-    public mutating func writeEncryptablePayload(_ payload: NIOSSHEncryptablePayload) -> Int {
+    mutating func writeEncryptablePayload(_ payload: NIOSSHEncryptablePayload) -> Int {
         self.writeSSHMessage(payload.message)
     }
 }

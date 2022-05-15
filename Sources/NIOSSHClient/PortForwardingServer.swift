@@ -26,7 +26,8 @@ final class PortForwardingServer {
     init(group: EventLoopGroup,
          bindHost: Substring,
          bindPort: Int,
-         _ forwardingChannelConstructor: @escaping (Channel) -> EventLoopFuture<Void>) {
+         _ forwardingChannelConstructor: @escaping (Channel) -> EventLoopFuture<Void>)
+    {
         self.serverLoop = group.next()
         self.group = group
         self.forwardingChannelConstructor = forwardingChannelConstructor

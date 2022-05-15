@@ -45,7 +45,7 @@ public struct NIOSSHPrivateKey {
     public init(p521Key key: P521.Signing.PrivateKey) {
         self.backingKey = .ecdsaP521(key)
     }
-    
+
     public init<PrivateKey: NIOSSHPrivateKeyProtocol>(custom key: PrivateKey) {
         self.backingKey = .custom(key)
     }
@@ -79,7 +79,7 @@ public struct NIOSSHPrivateKey {
 
 extension NIOSSHPrivateKey {
     /// The various key types that can be used with NIOSSH.
-    internal enum BackingKey {
+    enum BackingKey {
         case ed25519(Curve25519.Signing.PrivateKey)
         case ecdsaP256(P256.Signing.PrivateKey)
         case ecdsaP384(P384.Signing.PrivateKey)
@@ -157,9 +157,9 @@ extension NIOSSHPrivateKey {
     }
 }
 
-extension NIOSSHPrivateKey {
+public extension NIOSSHPrivateKey {
     /// Obtains the public key for a corresponding private key.
-    public var publicKey: NIOSSHPublicKey {
+    var publicKey: NIOSSHPublicKey {
         switch self.backingKey {
         case .ed25519(let privateKey):
             return NIOSSHPublicKey(backingKey: .ed25519(privateKey.publicKey))

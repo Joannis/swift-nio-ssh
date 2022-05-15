@@ -317,10 +317,10 @@ final class KeyExchangeTests: XCTestCase {
 }
 
 /// This helper extension persists the old way of initializing config for this file.
-extension SSHConnectionRole {
-    fileprivate static func server(_ hostKeys: [NIOSSHPrivateKey]) -> SSHConnectionRole {
+private extension SSHConnectionRole {
+    static func server(_ hostKeys: [NIOSSHPrivateKey]) -> SSHConnectionRole {
         .server(SSHServerConfiguration(hostKeys: hostKeys, userAuthDelegate: DenyAllServerAuthDelegate()))
     }
 
-    fileprivate static let client = SSHConnectionRole.client(SSHClientConfiguration(userAuthDelegate: ExplodingAuthDelegate(), serverAuthDelegate: AcceptAllHostKeysDelegate()))
+    static let client = SSHConnectionRole.client(SSHClientConfiguration(userAuthDelegate: ExplodingAuthDelegate(), serverAuthDelegate: AcceptAllHostKeysDelegate()))
 }

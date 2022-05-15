@@ -24,8 +24,8 @@ struct ChildChannelStateMachine {
     }
 }
 
-extension ChildChannelStateMachine {
-    fileprivate enum State: Hashable {
+private extension ChildChannelStateMachine {
+    enum State: Hashable {
         /// `idle` represents a child channel that has been allocated locally, but where we haven't asked the wire
         /// protocol to do anything with it yet: that is, we have not requested the channel. Such a channel is purely
         /// virtual. It exists only because we're attempting to start a channel locally and we haven't configured it yet.

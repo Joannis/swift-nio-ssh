@@ -13,8 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 import Crypto
-import NIOConcurrencyHelpers
 import Foundation
+import NIOConcurrencyHelpers
 import NIOCore
 
 /// An SSH public key.
@@ -157,7 +157,7 @@ extension NIOSSHPublicKey {
 
 extension NIOSSHPublicKey {
     /// The various key types that can be used with NIOSSH.
-    internal enum BackingKey {
+    enum BackingKey {
         case ed25519(Curve25519.Signing.PublicKey)
         case ecdsaP256(P256.Signing.PublicKey)
         case ecdsaP384(P384.Signing.PublicKey)
@@ -167,18 +167,18 @@ extension NIOSSHPublicKey {
     }
 
     /// The prefix of an Ed25519 public key.
-    internal static let ed25519PublicKeyPrefix = "ssh-ed25519".utf8
+    static let ed25519PublicKeyPrefix = "ssh-ed25519".utf8
 
     /// The prefix of a P256 ECDSA public key.
-    internal static let ecdsaP256PublicKeyPrefix = "ecdsa-sha2-nistp256".utf8
+    static let ecdsaP256PublicKeyPrefix = "ecdsa-sha2-nistp256".utf8
 
     /// The prefix of a P384 ECDSA public key.
-    internal static let ecdsaP384PublicKeyPrefix = "ecdsa-sha2-nistp384".utf8
+    static let ecdsaP384PublicKeyPrefix = "ecdsa-sha2-nistp384".utf8
 
     /// The prefix of a P521 ECDSA public key.
-    internal static let ecdsaP521PublicKeyPrefix = "ecdsa-sha2-nistp521".utf8
+    static let ecdsaP521PublicKeyPrefix = "ecdsa-sha2-nistp521".utf8
 
-    internal var keyPrefix: String.UTF8View {
+    var keyPrefix: String.UTF8View {
         switch self.backingKey {
         case .ed25519:
             return Self.ed25519PublicKeyPrefix
@@ -196,20 +196,20 @@ extension NIOSSHPublicKey {
     }
 
     private static let bundledAlgorithms: [String.UTF8View] = [
-        Self.ed25519PublicKeyPrefix, Self.ecdsaP384PublicKeyPrefix, Self.ecdsaP256PublicKeyPrefix, Self.ecdsaP521PublicKeyPrefix
+        Self.ed25519PublicKeyPrefix, Self.ecdsaP384PublicKeyPrefix, Self.ecdsaP256PublicKeyPrefix, Self.ecdsaP521PublicKeyPrefix,
     ]
-    
-    internal static var knownAlgorithms: [String.UTF8View] {
+
+    static var knownAlgorithms: [String.UTF8View] {
         bundledAlgorithms + customPublicKeyAlgorithms.map { $0.publicKeyPrefix.utf8 }
     }
-    
-    internal static var customPublicKeyAlgorithms: [NIOSSHPublicKeyProtocol.Type] {
+
+    static var customPublicKeyAlgorithms: [NIOSSHPublicKeyProtocol.Type] {
         customAlgorithmsLock.lock()
         defer { customAlgorithmsLock.unlock() }
         return _customPublicKeyAlgorithms
     }
-    
-    internal static var customSignatures: [NIOSSHSignatureProtocol.Type] {
+
+    static var customSignatures: [NIOSSHSignatureProtocol.Type] {
         customAlgorithmsLock.lock()
         defer { customAlgorithmsLock.unlock() }
         return _customSignatures
@@ -220,21 +220,21 @@ public enum NIOSSHAlgorithms {
     public static func register(keyExchangeAlgorithm type: NIOSSHKeyExchangeAlgorithmProtocol.Type) {
         customAlgorithmsLock.lock()
         defer { customAlgorithmsLock.unlock() }
-        
+
         if !_customKeyExchangeAlgorithms.contains(where: { ObjectIdentifier($0) == ObjectIdentifier(type) }) {
             _customKeyExchangeAlgorithms.append(type)
         }
     }
-    
+
     public static func register(transportProtectionScheme type: NIOSSHTransportProtection.Type) {
         customAlgorithmsLock.lock()
         defer { customAlgorithmsLock.unlock() }
-        
+
         if !_customTransportProtectionSchemes.contains(where: { ObjectIdentifier($0) == ObjectIdentifier(type) }) {
             _customTransportProtectionSchemes.append(type)
         }
     }
-    
+
     /// Registers a custom type tuple for use in Public Key Authentication.
     public static func register<
         PublicKey: NIOSSHPublicKeyProtocol,
@@ -245,18 +245,18 @@ public enum NIOSSHAlgorithms {
     ) {
         customAlgorithmsLock.lock()
         defer { customAlgorithmsLock.unlock() }
-        
+
         if !_customPublicKeyAlgorithms.contains(where: { ObjectIdentifier($0) == ObjectIdentifier(type) }) {
             _customPublicKeyAlgorithms.append(type)
             _customSignatures.append(signature)
         }
     }
-    
+
     /// Used for our unit tests
     internal static func unregisterAlgorithms() {
         customAlgorithmsLock.lock()
         defer { customAlgorithmsLock.unlock() }
-        
+
         _customKeyExchangeAlgorithms = []
         _customSignatures = []
         _customPublicKeyAlgorithms = []
@@ -277,10 +277,10 @@ internal var customKeyExchangeAlgorithms: [NIOSSHKeyExchangeAlgorithmProtocol.Ty
 }
 
 internal let customAlgorithmsLock = Lock()
-fileprivate var _customTransportProtectionSchemes = [NIOSSHTransportProtection.Type]()
-fileprivate var _customKeyExchangeAlgorithms = [NIOSSHKeyExchangeAlgorithmProtocol.Type]()
-fileprivate var _customPublicKeyAlgorithms: [NIOSSHPublicKeyProtocol.Type] = []
-fileprivate var _customSignatures: [NIOSSHSignatureProtocol.Type] = []
+private var _customTransportProtectionSchemes = [NIOSSHTransportProtection.Type]()
+private var _customKeyExchangeAlgorithms = [NIOSSHKeyExchangeAlgorithmProtocol.Type]()
+private var _customPublicKeyAlgorithms: [NIOSSHPublicKeyProtocol.Type] = []
+private var _customSignatures: [NIOSSHSignatureProtocol.Type] = []
 
 extension NIOSSHPublicKey.BackingKey: Equatable {
     static func == (lhs: NIOSSHPublicKey.BackingKey, rhs: NIOSSHPublicKey.BackingKey) -> Bool {
@@ -337,15 +337,15 @@ extension NIOSSHPublicKey.BackingKey: Hashable {
     }
 }
 
-extension NIOSSHPublicKey {
+public extension NIOSSHPublicKey {
     @discardableResult
-    public func write(to buffer: inout ByteBuffer) -> Int {
-        return buffer.writeSSHHostKey(self)
+    func write(to buffer: inout ByteBuffer) -> Int {
+        buffer.writeSSHHostKey(self)
     }
-    
+
     @discardableResult
-    public func writeWithoutHeader(to buffer: inout ByteBuffer) -> Int {
-        return buffer.writeSSHHostKeyWithoutHeader(self)
+    func writeWithoutHeader(to buffer: inout ByteBuffer) -> Int {
+        buffer.writeSSHHostKeyWithoutHeader(self)
     }
 }
 
@@ -367,7 +367,7 @@ extension ByteBuffer {
             return self.writeCertifiedKey(key)
         }
     }
-    
+
     /// Writes an SSH host key to this `ByteBuffer`.
     @discardableResult
     mutating func writeSSHHostKey(_ key: NIOSSHPublicKey) -> Int {
@@ -448,7 +448,7 @@ extension ByteBuffer {
                         return NIOSSHPublicKey(backingKey: .custom(publicKey))
                     }
                 }
-                
+
                 // We don't know this public key type. Maybe the certified keys do.
                 return try buffer.readCertifiedKeyWithoutKeyPrefix(keyIdentifierBytes).map(NIOSSHPublicKey.init)
             }

@@ -69,7 +69,8 @@ if let listen = parseResult.listen {
                                                          targetPort: listen.targetPort,
                                                          originatorAddress: inboundChannel.remoteAddress!)
             sshHandler.createChannel(promise,
-                                     channelType: .directTCPIP(directTCPIP)) { childChannel, channelType in
+                                     channelType: .directTCPIP(directTCPIP))
+            { childChannel, channelType in
                 guard case .directTCPIP = channelType else {
                     return channel.eventLoop.makeFailedFuture(SSHClientError.invalidChannelType)
                 }

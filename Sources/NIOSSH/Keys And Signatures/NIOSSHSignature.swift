@@ -240,7 +240,7 @@ extension ByteBuffer {
                         return NIOSSHSignature(backingSignature: .custom(signature))
                     }
                 }
-                
+
                 // We don't know this signature type.
                 let signature = signatureIdentifierBytes.readString(length: signatureIdentifierBytes.readableBytes) ?? "<unknown signature>"
                 throw NIOSSHError.unknownSignature(algorithm: signature)
@@ -269,8 +269,9 @@ extension ByteBuffer {
         // For ECDSA-P256, the key format is `mpint r` followed by `mpint s`.
         // We don't need them as mpints, so let's treat them as strings instead.
         guard var signatureBytes = self.readSSHString(),
-            let rBytes = signatureBytes.readSSHString(),
-            let sBytes = signatureBytes.readSSHString() else {
+              let rBytes = signatureBytes.readSSHString(),
+              let sBytes = signatureBytes.readSSHString()
+        else {
             return nil
         }
 
@@ -287,8 +288,9 @@ extension ByteBuffer {
         // For ECDSA-P384, the key format is `mpint r` followed by `mpint s`.
         // We don't need them as mpints, so let's treat them as strings instead.
         guard var signatureBytes = self.readSSHString(),
-            let rBytes = signatureBytes.readSSHString(),
-            let sBytes = signatureBytes.readSSHString() else {
+              let rBytes = signatureBytes.readSSHString(),
+              let sBytes = signatureBytes.readSSHString()
+        else {
             return nil
         }
 
@@ -305,8 +307,9 @@ extension ByteBuffer {
         // For ECDSA-P521, the key format is `mpint r` followed by `mpint s`.
         // We don't need them as mpints, so let's treat them as strings instead.
         guard var signatureBytes = self.readSSHString(),
-            let rBytes = signatureBytes.readSSHString(),
-            let sBytes = signatureBytes.readSSHString() else {
+              let rBytes = signatureBytes.readSSHString(),
+              let sBytes = signatureBytes.readSSHString()
+        else {
             return nil
         }
 
@@ -361,10 +364,10 @@ private struct ECDSASignatureHelper {
     }
 }
 
-extension ByteBuffer {
+private extension ByteBuffer {
     // A view onto the mpInt bytes. Strips off a leading 0 if it is present for
     // size reasons.
-    fileprivate var mpIntView: ByteBufferView {
+    var mpIntView: ByteBufferView {
         var baseView = self.readableBytesView
         if baseView.first == 0 {
             baseView = baseView.dropFirst()

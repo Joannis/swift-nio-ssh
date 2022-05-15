@@ -210,14 +210,14 @@ final class SSHPacketParserTests: XCTestCase {
     }
 }
 
-extension ByteBuffer {
-    public static func of(string: String) -> ByteBuffer {
+public extension ByteBuffer {
+    static func of(string: String) -> ByteBuffer {
         var buffer = ByteBufferAllocator().buffer(capacity: string.count)
         buffer.writeString(string)
         return buffer
     }
 
-    public static func of(bytes: [UInt8]) -> ByteBuffer {
+    static func of(bytes: [UInt8]) -> ByteBuffer {
         var buffer = ByteBufferAllocator().buffer(capacity: bytes.count)
         buffer.writeBytes(bytes)
         return buffer

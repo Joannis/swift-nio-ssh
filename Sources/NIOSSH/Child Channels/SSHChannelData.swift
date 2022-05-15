@@ -38,10 +38,10 @@ extension SSHChannelData: Equatable {}
 
 extension SSHChannelData: NIOSSHSendable {}
 
-extension SSHChannelData {
+public extension SSHChannelData {
     /// The type of this channel data. Regular `.channel` data is the standard type of data on an `SSHChannel`,
     /// but extended data types (such as `.stderr`) are available as well.
-    public struct DataType {
+    struct DataType {
         internal var _baseType: UInt32
 
         /// Regular channel data.
@@ -87,17 +87,17 @@ extension SSHChannelData.DataType: ExpressibleByIntegerLiteral {
 }
 
 extension SSHChannelData {
-    internal init(_ message: SSHMessage.ChannelDataMessage) {
+    init(_ message: SSHMessage.ChannelDataMessage) {
         self = .init(type: .channel, data: .byteBuffer(message.data))
     }
 
-    internal init(_ message: SSHMessage.ChannelExtendedDataMessage) {
+    init(_ message: SSHMessage.ChannelExtendedDataMessage) {
         self = .init(type: .init(message.dataTypeCode), data: .byteBuffer(message.data))
     }
 }
 
 extension SSHChannelData.DataType {
-    internal init(_ code: SSHMessage.ChannelExtendedDataMessage.Code) {
+    init(_ code: SSHMessage.ChannelExtendedDataMessage.Code) {
         switch code {
         case .stderr:
             self = .stdErr
@@ -106,7 +106,7 @@ extension SSHChannelData.DataType {
 }
 
 extension SSHMessage {
-    internal init(_ channelData: SSHChannelData, recipientChannel: UInt32) {
+    init(_ channelData: SSHChannelData, recipientChannel: UInt32) {
         guard case .byteBuffer(let bb) = channelData.data else {
             // TODO: Support fileregion!
             preconditionFailure("FileRegion not supported at this time")

@@ -155,8 +155,8 @@ final class SSHEncryptedTrafficTests: XCTestCase {
     }
 }
 
-extension SSHEncryptedTrafficTests {
-    fileprivate enum Protection {
+private extension SSHEncryptedTrafficTests {
+    enum Protection {
         case aes128
         case aes256
 

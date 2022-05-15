@@ -363,8 +363,8 @@ final class ByteBufferSSHTests: XCTestCase {
     }
 }
 
-extension ByteBuffer {
-    fileprivate var array: [UInt8] {
+private extension ByteBuffer {
+    var array: [UInt8] {
         self.getBytes(at: self.readerIndex, length: self.readableBytes)!
     }
 }

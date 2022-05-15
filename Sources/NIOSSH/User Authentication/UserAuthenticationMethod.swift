@@ -29,7 +29,7 @@ public struct NIOSSHAvailableUserAuthenticationMethods: OptionSet {
 }
 
 extension NIOSSHAvailableUserAuthenticationMethods {
-    internal init(_ message: SSHMessage.UserAuthFailureMessage) {
+    init(_ message: SSHMessage.UserAuthFailureMessage) {
         self = .init()
 
         for message in message.authentications {
@@ -47,7 +47,7 @@ extension NIOSSHAvailableUserAuthenticationMethods {
         }
     }
 
-    internal var strings: [Substring] {
+    var strings: [Substring] {
         guard self != .init() else {
             return []
         }
@@ -85,8 +85,8 @@ public struct NIOSSHUserAuthenticationRequest {
     }
 }
 
-extension NIOSSHUserAuthenticationRequest {
-    public enum Request {
+public extension NIOSSHUserAuthenticationRequest {
+    enum Request {
         case publicKey(PublicKey)
         case password(Password)
         case hostBased(HostBased)
@@ -94,8 +94,8 @@ extension NIOSSHUserAuthenticationRequest {
     }
 }
 
-extension NIOSSHUserAuthenticationRequest.Request {
-    public struct PublicKey {
+public extension NIOSSHUserAuthenticationRequest.Request {
+    struct PublicKey {
         public var publicKey: NIOSSHPublicKey
 
         public init(publicKey: NIOSSHPublicKey) {
@@ -103,7 +103,7 @@ extension NIOSSHUserAuthenticationRequest.Request {
         }
     }
 
-    public struct Password {
+    struct Password {
         public var password: String
 
         public init(password: String) {
@@ -111,7 +111,7 @@ extension NIOSSHUserAuthenticationRequest.Request {
         }
     }
 
-    public struct HostBased {
+    struct HostBased {
         init() {
             fatalError("PublicKeyRequest is currently unimplemented")
         }
@@ -141,8 +141,8 @@ public struct NIOSSHUserAuthenticationOffer {
     }
 }
 
-extension NIOSSHUserAuthenticationOffer {
-    public enum Offer {
+public extension NIOSSHUserAuthenticationOffer {
+    enum Offer {
         case privateKey(PrivateKey)
         case password(Password)
         case hostBased(HostBased)
@@ -150,8 +150,8 @@ extension NIOSSHUserAuthenticationOffer {
     }
 }
 
-extension NIOSSHUserAuthenticationOffer.Offer {
-    public struct PrivateKey {
+public extension NIOSSHUserAuthenticationOffer.Offer {
+    struct PrivateKey {
         public var privateKey: NIOSSHPrivateKey
         public var publicKey: NIOSSHPublicKey
 
@@ -166,7 +166,7 @@ extension NIOSSHUserAuthenticationOffer.Offer {
         }
     }
 
-    public struct Password {
+    struct Password {
         public var password: String
 
         public init(password: String) {
@@ -174,7 +174,7 @@ extension NIOSSHUserAuthenticationOffer.Offer {
         }
     }
 
-    public struct HostBased {
+    struct HostBased {
         init() {
             fatalError("PublicKeyRequest is currently unimplemented")
         }

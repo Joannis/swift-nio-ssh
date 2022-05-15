@@ -17,7 +17,7 @@ import NIOCore
 /// The various channel options specific to `SSHChildChannel`s.
 ///
 /// Please note that some of NIO's regular `ChannelOptions` are valid on `SSHChildChannel`s.
-public struct SSHChildChannelOptions {
+public enum SSHChildChannelOptions {
     /// - seealso: `LocalChannelIdentifierOption`.
     public static let localChannelIdentifier: SSHChildChannelOptions.Types.LocalChannelIdentifierOption = .init()
 
@@ -31,34 +31,34 @@ public struct SSHChildChannelOptions {
     public static let peerMaximumMessageLength: SSHChildChannelOptions.Types.PeerMaximumMessageLengthOption = .init()
 }
 
-extension SSHChildChannelOptions {
-    public enum Types {}
+public extension SSHChildChannelOptions {
+    enum Types {}
 }
 
-extension SSHChildChannelOptions.Types {
+public extension SSHChildChannelOptions.Types {
     /// `LocalChannelIdentifierOption` allows users to query the channel number assigned locally for a given channel.
-    public struct LocalChannelIdentifierOption: ChannelOption, NIOSSHSendable {
+    struct LocalChannelIdentifierOption: ChannelOption, NIOSSHSendable {
         public typealias Value = UInt32
 
         public init() {}
     }
 
     /// `RemoteChannelIdentifierOption` allows users to query the channel number assigned by the remote peer for a given channel.
-    public struct RemoteChannelIdentifierOption: ChannelOption, NIOSSHSendable {
+    struct RemoteChannelIdentifierOption: ChannelOption, NIOSSHSendable {
         public typealias Value = UInt32?
 
         public init() {}
     }
 
     /// `SSHChannelTypeOption` allows users to query the type of the channel they're currently using.
-    public struct SSHChannelTypeOption: ChannelOption, NIOSSHSendable {
+    struct SSHChannelTypeOption: ChannelOption, NIOSSHSendable {
         public typealias Value = SSHChannelType
 
         public init() {}
     }
 
     /// `PeerMaximumMessageLengthOption` allows users to query the maximum packet size value reported by the remote peer for a given channel.
-    public struct PeerMaximumMessageLengthOption: ChannelOption, NIOSSHSendable {
+    struct PeerMaximumMessageLengthOption: ChannelOption, NIOSSHSendable {
         public typealias Value = UInt32
 
         public init() {}

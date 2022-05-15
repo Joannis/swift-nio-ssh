@@ -33,8 +33,8 @@ struct UserAuthenticationStateMachine {
     fileprivate static let nextServiceName: String = "ssh-connection"
 }
 
-extension UserAuthenticationStateMachine {
-    fileprivate enum State {
+private extension UserAuthenticationStateMachine {
+    enum State {
         /// In this state, we have not received any user auth messages yet
         case idle
         case awaitingServiceAcceptance
@@ -45,8 +45,8 @@ extension UserAuthenticationStateMachine {
     }
 }
 
-extension UserAuthenticationStateMachine {
-    fileprivate static let protocolName = "userauth"
+private extension UserAuthenticationStateMachine {
+    static let protocolName = "userauth"
 }
 
 // MARK: Receiving Messages
@@ -377,8 +377,8 @@ extension UserAuthenticationStateMachine {
 
 // MARK: Interacting with client delegate
 
-extension UserAuthenticationStateMachine {
-    fileprivate func requestNextAuthRequest(methods: NIOSSHAvailableUserAuthenticationMethods, delegate: NIOSSHClientUserAuthenticationDelegate) -> EventLoopFuture<SSHMessage.UserAuthRequestMessage?> {
+private extension UserAuthenticationStateMachine {
+    func requestNextAuthRequest(methods: NIOSSHAvailableUserAuthenticationMethods, delegate: NIOSSHClientUserAuthenticationDelegate) -> EventLoopFuture<SSHMessage.UserAuthRequestMessage?> {
         let promise = self.loop.makePromise(of: NIOSSHUserAuthenticationOffer?.self)
         delegate.nextAuthenticationType(availableMethods: methods, nextChallengePromise: promise)
 
@@ -391,8 +391,8 @@ extension UserAuthenticationStateMachine {
 
 // MARK: Interacting with server delegate
 
-extension UserAuthenticationStateMachine {
-    fileprivate func nextAuthResponse(request: SSHMessage.UserAuthRequestMessage, delegate: NIOSSHServerUserAuthenticationDelegate) -> EventLoopFuture<NIOSSHUserAuthenticationResponseMessage> {
+private extension UserAuthenticationStateMachine {
+    func nextAuthResponse(request: SSHMessage.UserAuthRequestMessage, delegate: NIOSSHServerUserAuthenticationDelegate) -> EventLoopFuture<NIOSSHUserAuthenticationResponseMessage> {
         switch request.method {
         case .password(let password):
             let request = NIOSSHUserAuthenticationRequest(username: request.username, serviceName: request.service, request: .password(.init(password: password)))

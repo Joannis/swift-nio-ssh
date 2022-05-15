@@ -20,7 +20,7 @@ public struct NIOSSHKeyExchangeServerReply {
     public var hostKey: NIOSSHPublicKey
     public var publicKey: ByteBuffer
     public var signature: NIOSSHSignature
-    
+
     public init(hostKey: NIOSSHPublicKey, publicKey: ByteBuffer, signature: NIOSSHSignature) {
         self.hostKey = hostKey
         self.publicKey = publicKey
@@ -33,7 +33,7 @@ public struct NIOSSHKeyExchangeServerReply {
 public protocol NIOSSHKeyExchangeAlgorithmProtocol {
     static var keyExchangeInitMessageId: UInt8 { get }
     static var keyExchangeReplyMessageId: UInt8 { get }
-    
+
     init(ourRole: SSHConnectionRole, previousSessionIdentifier: ByteBuffer?)
 
     func initiateKeyExchangeClientSide(allocator: ByteBufferAllocator) -> ByteBuffer
@@ -62,7 +62,7 @@ struct EllipticCurveKeyExchange<PrivateKey: ECDHCompatiblePrivateKey>: NIOSSHKey
     private var theirKey: PrivateKey.PublicKey?
     private var ourRole: SSHConnectionRole
     private var sharedSecret: SharedSecret?
-    
+
     static var keyExchangeInitMessageId: UInt8 { 30 }
     static var keyExchangeReplyMessageId: UInt8 { 31 }
 
@@ -102,7 +102,8 @@ extension EllipticCurveKeyExchange {
                                                 serverHostKey: NIOSSHPrivateKey,
                                                 initialExchangeBytes: inout ByteBuffer,
                                                 allocator: ByteBufferAllocator,
-                                                expectedKeySizes: ExpectedKeySizes) throws -> (KeyExchangeResult, NIOSSHKeyExchangeServerReply) {
+                                                expectedKeySizes: ExpectedKeySizes) throws -> (KeyExchangeResult, NIOSSHKeyExchangeServerReply)
+    {
         precondition(self.ourRole.isServer, "Only servers may receive a client key exchange packet!")
 
         // With that, we have enough to finalize the key exchange.
@@ -173,7 +174,8 @@ extension EllipticCurveKeyExchange {
                                               initialExchangeBytes: inout ByteBuffer,
                                               serverHostKey: NIOSSHPublicKey,
                                               allocator: ByteBufferAllocator,
-                                              expectedKeySizes: ExpectedKeySizes) throws -> EllipticCurveKeyExchangeResult {
+                                              expectedKeySizes: ExpectedKeySizes) throws -> EllipticCurveKeyExchangeResult
+    {
         self.theirKey = try PrivateKey.PublicKey(buffer: theirKeyBytes)
         self.sharedSecret = try self.ourKey.generatedSharedSecret(with: self.theirKey!)
 
@@ -305,11 +307,11 @@ extension EllipticCurveKeyExchange {
     }
 }
 
-extension EllipticCurveKeyExchange {
+private extension EllipticCurveKeyExchange {
     /// The internal result of a key exchange operation.
     ///
     /// This is like `KeyExchangeResult`, but includes the exchange hash for signing purposes.
-    fileprivate struct EllipticCurveKeyExchangeResult {
+    struct EllipticCurveKeyExchangeResult {
         var sessionID: ByteBuffer
 
         var exchangeHash: PrivateKey.Hasher.Digest
@@ -318,16 +320,16 @@ extension EllipticCurveKeyExchange {
     }
 }
 
-extension KeyExchangeResult {
-    fileprivate init<PrivateKey: ECDHCompatiblePrivateKey>(_ innerResult: EllipticCurveKeyExchange<PrivateKey>.EllipticCurveKeyExchangeResult) {
+private extension KeyExchangeResult {
+    init<PrivateKey: ECDHCompatiblePrivateKey>(_ innerResult: EllipticCurveKeyExchange<PrivateKey>.EllipticCurveKeyExchangeResult) {
         self.keys = innerResult.keys
         self.sessionID = innerResult.sessionID
     }
 }
 
-extension SymmetricKey {
+private extension SymmetricKey {
     /// Creates a symmetric key by truncating a given digest.
-    fileprivate static func truncatingDigest<D: Digest>(_ digest: D, length: Int) -> SymmetricKey {
+    static func truncatingDigest<D: Digest>(_ digest: D, length: Int) -> SymmetricKey {
         assert(length <= D.byteCount)
         return digest.withUnsafeBytes { bodyPtr in
             SymmetricKey(data: UnsafeRawBufferPointer(rebasing: bodyPtr.prefix(length)))
@@ -335,8 +337,8 @@ extension SymmetricKey {
     }
 }
 
-extension HashFunction {
-    fileprivate mutating func updateAsMPInt(sharedSecret: SharedSecret) {
+private extension HashFunction {
+    mutating func updateAsMPInt(sharedSecret: SharedSecret) {
         sharedSecret.withUnsafeBytes { secretBytesPtr in
             var secretBytesPtr = secretBytesPtr[...]
 
@@ -445,8 +447,8 @@ private struct SharedSecretLengthHelper {
     }
 }
 
-extension HashFunction {
-    fileprivate mutating func update(byte: UInt8) {
+private extension HashFunction {
+    mutating func update(byte: UInt8) {
         withUnsafeBytes(of: byte) { bytePtr in
             assert(bytePtr.count == 1, "Why is this 8 bit integer so large?")
             self.update(bufferPointer: bytePtr)

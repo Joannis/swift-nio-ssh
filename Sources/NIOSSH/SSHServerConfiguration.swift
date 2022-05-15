@@ -28,13 +28,13 @@ public struct SSHServerConfiguration {
 
     /// The ssh banner to display to clients upon authentication
     public var banner: UserAuthBanner?
-    
+
     /// The enabled TransportProtectionSchemes
     public var transportProtectionSchemes: [NIOSSHTransportProtection.Type] = SSHConnectionStateMachine.bundledTransportProtectionSchemes
-    
+
     /// The enabled KeyExchangeAlgorithms
     public var keyExchangeAlgorithms: [NIOSSHKeyExchangeAlgorithmProtocol.Type] = SSHKeyExchangeStateMachine.bundledKeyExchangeImplementations
-    
+
     public init(hostKeys: [NIOSSHPrivateKey], userAuthDelegate: NIOSSHServerUserAuthenticationDelegate, globalRequestDelegate: GlobalRequestDelegate? = nil, banner: UserAuthBanner? = nil) {
         self.hostKeys = hostKeys
         self.userAuthDelegate = userAuthDelegate
@@ -49,13 +49,13 @@ public struct SSHServerConfiguration {
 
 // MARK: - UserAuthBanner
 
-extension SSHServerConfiguration {
+public extension SSHServerConfiguration {
     /**
      Server sends `UserAuthBanner` to client some time during authentication.
      Client is obligated to display this banner to the end user, unless explicitely told
      to ignore banners.
      */
-    public struct UserAuthBanner {
+    struct UserAuthBanner {
         /**
          The message to be displayed by client to end user during authentication.
          Note that control characters contained in message might be filtered by

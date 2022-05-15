@@ -553,7 +553,8 @@ extension ByteBuffer {
             guard
                 let alwaysDisplay = self.readSSHBoolean(),
                 let message = self.readSSHStringAsString(),
-                let language = self.readSSHStringAsString() else {
+                let language = self.readSSHStringAsString()
+            else {
                 return nil
             }
 
@@ -737,7 +738,7 @@ extension ByteBuffer {
     mutating func readUserAuthBannerMessage() -> SSHMessage.UserAuthBannerMessage? {
         self.rewindReaderOnNil { `self` in
             guard let message = self.readSSHStringAsString(),
-                let languageTag = self.readSSHStringAsString()
+                  let languageTag = self.readSSHStringAsString()
             else {
                 return nil
             }

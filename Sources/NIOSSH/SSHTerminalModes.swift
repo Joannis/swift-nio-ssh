@@ -32,9 +32,9 @@ extension SSHTerminalModes: NIOSSHSendable {}
 
 // MARK: Opcode
 
-extension SSHTerminalModes {
+public extension SSHTerminalModes {
     /// A terminal mode opcode.
-    public struct Opcode {
+    struct Opcode {
         /// The raw value of the terminal mode opcode.
         public var rawValue: UInt8 {
             get {
@@ -359,9 +359,9 @@ extension SSHTerminalModes.Opcode: CustomStringConvertible {
 
 // MARK: OpcodeValue
 
-extension SSHTerminalModes {
+public extension SSHTerminalModes {
     /// The value of an SSH terminal mode opcode.
-    public struct OpcodeValue {
+    struct OpcodeValue {
         /// The raw value of this opcode.
         public var rawValue: UInt32
 

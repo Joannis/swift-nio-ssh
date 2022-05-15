@@ -40,8 +40,8 @@ public enum SSHChannelType: Equatable, NIOSSHSendable {
     case forwardedTCPIP(ForwardedTCPIP)
 }
 
-extension SSHChannelType {
-    public struct DirectTCPIP: Equatable, NIOSSHSendable {
+public extension SSHChannelType {
+    struct DirectTCPIP: Equatable, NIOSSHSendable {
         /// The target host for the forwarded TCP connection.
         public var targetHost: String
 
@@ -74,8 +74,8 @@ extension SSHChannelType {
     }
 }
 
-extension SSHChannelType {
-    public struct ForwardedTCPIP: Equatable, NIOSSHSendable {
+public extension SSHChannelType {
+    struct ForwardedTCPIP: Equatable, NIOSSHSendable {
         /// The host the remote peer connected to. This should be identical to the one that was requested.
         public var listeningHost: String
 
@@ -109,7 +109,7 @@ extension SSHChannelType {
 }
 
 extension SSHChannelType {
-    internal init(_ message: SSHMessage.ChannelOpenMessage) {
+    init(_ message: SSHMessage.ChannelOpenMessage) {
         switch message.type {
         case .session:
             self = .session
@@ -122,7 +122,7 @@ extension SSHChannelType {
 }
 
 extension SSHMessage.ChannelOpenMessage.ChannelType {
-    internal init(_ type: SSHChannelType) {
+    init(_ type: SSHChannelType) {
         switch type {
         case .session:
             self = .session

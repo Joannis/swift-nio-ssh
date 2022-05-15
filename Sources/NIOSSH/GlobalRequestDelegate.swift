@@ -26,8 +26,8 @@ public protocol GlobalRequestDelegate {
     func tcpForwardingRequest(_: GlobalRequest.TCPForwardingRequest, handler: NIOSSHHandler, promise: EventLoopPromise<GlobalRequest.TCPForwardingResponse>)
 }
 
-extension GlobalRequestDelegate {
-    public func tcpForwardingRequest(_ request: GlobalRequest.TCPForwardingRequest, handler: NIOSSHHandler, promise: EventLoopPromise<GlobalRequest.TCPForwardingResponse>) {
+public extension GlobalRequestDelegate {
+    func tcpForwardingRequest(_ request: GlobalRequest.TCPForwardingRequest, handler: NIOSSHHandler, promise: EventLoopPromise<GlobalRequest.TCPForwardingResponse>) {
         // The default implementation rejects all requests.
         promise.fail(NIOSSHError.unsupportedGlobalRequest)
     }
@@ -67,7 +67,7 @@ public enum GlobalRequest {
 internal struct DefaultGlobalRequestDelegate: GlobalRequestDelegate {}
 
 extension SSHMessage.GlobalRequestMessage.RequestType {
-    internal init(_ request: GlobalRequest.TCPForwardingRequest) {
+    init(_ request: GlobalRequest.TCPForwardingRequest) {
         switch request {
         case .listen(host: let host, port: let port):
             self = .tcpipForward(host, UInt32(port))
@@ -78,7 +78,7 @@ extension SSHMessage.GlobalRequestMessage.RequestType {
 }
 
 extension GlobalRequest.TCPForwardingResponse {
-    internal init(_ response: SSHMessage.RequestSuccessMessage) {
+    init(_ response: SSHMessage.RequestSuccessMessage) {
         var data = response.buffer
         if let boundPort = data.readInteger(as: UInt32.self) {
             self.boundPort = Int(boundPort)
@@ -87,7 +87,7 @@ extension GlobalRequest.TCPForwardingResponse {
 }
 
 extension SSHMessage.RequestSuccessMessage {
-    internal init(_ request: GlobalRequest.GlobalRequestResponse, allocator: ByteBufferAllocator) {
+    init(_ request: GlobalRequest.GlobalRequestResponse, allocator: ByteBufferAllocator) {
         switch request {
         case .tcpForwarding(let response):
             var buffer = allocator.buffer(capacity: 4)

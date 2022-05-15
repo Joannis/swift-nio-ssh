@@ -281,19 +281,19 @@ extension NIOSSHHandler {
         self.sendGlobalRequestsIfPossible()
     }
 
-    fileprivate func dropAllPendingGlobalRequests(_ error: Error) {
+    private func dropAllPendingGlobalRequests(_ error: Error) {
         while let next = self.pendingGlobalRequests.popFirst() {
             next.1?.fail(error)
         }
     }
 
-    fileprivate func dropUnsatisfiedGlobalRequests(_ error: Error) {
+    private func dropUnsatisfiedGlobalRequests(_ error: Error) {
         while let next = self.pendingGlobalRequestResponses.popFirst() {
             next?.fail(error)
         }
     }
 
-    fileprivate func handleGlobalRequestResponse(_ response: SSHConnectionStateMachine.StateMachineInboundProcessResult.GlobalRequestResponse) throws {
+    private func handleGlobalRequestResponse(_ response: SSHConnectionStateMachine.StateMachineInboundProcessResult.GlobalRequestResponse) throws {
         guard let next = self.pendingGlobalRequestResponses.popFirst() else {
             throw NIOSSHError.unexpectedGlobalRequestResponse
         }
@@ -306,7 +306,7 @@ extension NIOSSHHandler {
         }
     }
 
-    fileprivate func handleGlobalRequest(_ message: SSHMessage.GlobalRequestMessage) throws {
+    private func handleGlobalRequest(_ message: SSHMessage.GlobalRequestMessage) throws {
         guard let context = context else {
             // Weird, somehow we're out of the channel now. Drop this.
             return
@@ -428,7 +428,7 @@ extension NIOSSHHandler {
     // This function mostly exists for testing purposes: we don't initiate re-keying today because it's not
     // well-supported by evidence. But we want to be able to test against implementations who do, so we have support for
     // kicking it off.
-    internal func _rekey() throws {
+    func _rekey() throws {
         // As this is test-only there are a bunch of preconditions in here, we don't really mind if we hit them in testing.
         var buffer = self.context!.channel.allocator.buffer(capacity: 1024)
         try self.stateMachine.beginRekeying(buffer: &buffer, allocator: self.context!.channel.allocator, loop: self.context!.eventLoop)
@@ -440,7 +440,7 @@ extension NIOSSHHandler {
 
 extension NIOSSHHandler {
     // This function is for testing purposes only.
-    internal func _disconnect() throws {
+    func _disconnect() throws {
         // As this is test-only there are a bunch of preconditions in here, we don't really mind if we hit them in testing.
         try self.writeMessage(.init(.disconnect(.init(reason: 0, description: "", tag: ""))), context: self.context!)
         self.context!.flush()
