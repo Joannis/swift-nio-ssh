@@ -34,7 +34,8 @@ public struct SSHClientConfiguration {
 
     public init(userAuthDelegate: NIOSSHClientUserAuthenticationDelegate,
                 serverAuthDelegate: NIOSSHClientServerAuthenticationDelegate,
-                globalRequestDelegate: GlobalRequestDelegate? = nil) {
+                globalRequestDelegate: GlobalRequestDelegate? = nil)
+    {
         self.userAuthDelegate = userAuthDelegate
         self.serverAuthDelegate = serverAuthDelegate
         self.globalRequestDelegate = globalRequestDelegate ?? DefaultGlobalRequestDelegate()

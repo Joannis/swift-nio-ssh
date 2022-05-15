@@ -144,8 +144,9 @@ final class UserAuthenticationStateMachineTests: XCTestCase {
         // For signed methods we need to be a bit careful: we can't assume that the signature will have a bitwise match, so we have to validate it
         // instead.
         if case .some(.publicKey(.known(let expectedKey, _))) = expectedMessage.map({ $0.method }),
-            case .some(.publicKey(.known(let actualKey, let actualSignature))) = request.map({ $0.method }),
-            let userAuthPayload = userAuthPayload {
+           case .some(.publicKey(.known(let actualKey, let actualSignature))) = request.map({ $0.method }),
+           let userAuthPayload = userAuthPayload
+        {
             XCTAssertEqual(expectedMessage!.username, request!.username)
             XCTAssertEqual(expectedMessage!.service, request!.service)
             XCTAssertEqual(expectedKey, actualKey)
@@ -173,8 +174,9 @@ final class UserAuthenticationStateMachineTests: XCTestCase {
         // For signed methods we need to be a bit careful: we can't assume that the signature will have a bitwise match, so we have to validate it
         // instead.
         if case .some(.publicKey(.known(let expectedKey, _))) = expectedMessage.map({ $0.method }),
-            case .some(.publicKey(.known(let actualKey, let actualSignature))) = request.map({ $0.method }),
-            let userAuthPayload = userAuthPayload {
+           case .some(.publicKey(.known(let actualKey, let actualSignature))) = request.map({ $0.method }),
+           let userAuthPayload = userAuthPayload
+        {
             XCTAssertEqual(expectedMessage!.username, request!.username)
             XCTAssertEqual(expectedMessage!.service, request!.service)
             XCTAssertEqual(expectedKey, actualKey)

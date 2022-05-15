@@ -102,7 +102,8 @@ extension EllipticCurveKeyExchange {
                                                 serverHostKey: NIOSSHPrivateKey,
                                                 initialExchangeBytes: inout ByteBuffer,
                                                 allocator: ByteBufferAllocator,
-                                                expectedKeySizes: ExpectedKeySizes) throws -> (KeyExchangeResult, NIOSSHKeyExchangeServerReply) {
+                                                expectedKeySizes: ExpectedKeySizes) throws -> (KeyExchangeResult, NIOSSHKeyExchangeServerReply)
+    {
         precondition(self.ourRole.isServer, "Only servers may receive a client key exchange packet!")
 
         // With that, we have enough to finalize the key exchange.

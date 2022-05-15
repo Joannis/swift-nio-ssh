@@ -99,8 +99,6 @@ final class SSHChildChannel {
 
     private var type: SSHChannelType?
 
-    private let maximumPacketSize: Int
-
     /// A promise from the user that will be fired when the channel goes active.
     private var userActivatePromise: EventLoopPromise<Channel>?
 
@@ -110,16 +108,15 @@ final class SSHChildChannel {
                               initializer: Initializer?,
                               localChannelID: UInt32,
                               targetWindowSize: Int32,
-                              initialOutboundWindowSize: UInt32,
-                              maximumPacketSize: Int) {
+                              initialOutboundWindowSize: UInt32)
+    {
         self.init(allocator: allocator,
                   parent: parent,
                   multiplexer: multiplexer,
                   initializer: initializer,
                   initialState: .init(localChannelID: localChannelID),
                   targetWindowSize: targetWindowSize,
-                  initialOutboundWindowSize: initialOutboundWindowSize,
-                  maximumPacketSize: maximumPacketSize)
+                  initialOutboundWindowSize: initialOutboundWindowSize)
     }
 
     private init(allocator: ByteBufferAllocator,
@@ -128,8 +125,8 @@ final class SSHChildChannel {
                  initializer: Initializer?,
                  initialState: ChildChannelStateMachine,
                  targetWindowSize: Int32,
-                 initialOutboundWindowSize: UInt32,
-                 maximumPacketSize: Int) {
+                 initialOutboundWindowSize: UInt32)
+    {
         self.allocator = allocator
         self.closePromise = parent.eventLoop.makePromise()
         self.parent = parent
@@ -142,7 +139,6 @@ final class SSHChildChannel {
         self.state = initialState
         self.writabilityManager = ChildChannelWritabilityManager(initialWindowSize: initialOutboundWindowSize,
                                                                  parentIsWritable: parent.isWritable)
-        self.maximumPacketSize = maximumPacketSize
         self.peerMaxMessageSize = 0
 
         // To begin with we initialize autoRead and halfClosure to false, but we are going to fetch it from our parent before we
@@ -479,7 +475,7 @@ extension SSHChildChannel: Channel, ChannelCore {
             let message = SSHMessage.ChannelOpenConfirmationMessage(recipientChannel: self.state.remoteChannelIdentifier!,
                                                                     senderChannel: self.state.localChannelIdentifier,
                                                                     initialWindowSize: self.windowManager.targetWindowSize,
-                                                                    maximumPacketSize: UInt32(self.maximumPacketSize))
+                                                                    maximumPacketSize: 1 << 24) // This is a weirdly hard-coded choice.
             self.processOutboundMessage(.channelOpenConfirmation(message), promise: nil)
             self.writePendingToMultiplexer()
         } else if !self.state.isClosed {
@@ -487,7 +483,7 @@ extension SSHChildChannel: Channel, ChannelCore {
             let message = SSHMessage.ChannelOpenMessage(type: .init(self.type!),
                                                         senderChannel: self.state.localChannelIdentifier,
                                                         initialWindowSize: self.windowManager.targetWindowSize,
-                                                        maximumPacketSize: UInt32(self.maximumPacketSize))
+                                                        maximumPacketSize: 1 << 24)
             self.processOutboundMessage(.channelOpen(message), promise: nil)
             self.writePendingToMultiplexer()
         } else {
