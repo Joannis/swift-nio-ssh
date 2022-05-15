@@ -44,18 +44,18 @@ enum InsecureEncryptionAlgorithm {
         var plaintext = plaintext
         var key = key
         guard let k0 = key.readInteger(as: UInt32.self),
-              let k1 = key.readInteger(as: UInt32.self),
-              let k2 = key.readInteger(as: UInt32.self),
-              let k3 = key.readInteger(as: UInt32.self)
+            let k1 = key.readInteger(as: UInt32.self),
+            let k2 = key.readInteger(as: UInt32.self),
+            let k3 = key.readInteger(as: UInt32.self)
         else {
             preconditionFailure("check key size")
         }
 
         while var block = plaintext.readSlice(length: 16) {
             guard var v0 = block.readInteger(as: UInt32.self),
-                  var v1 = block.readInteger(as: UInt32.self),
-                  var v2 = block.readInteger(as: UInt32.self),
-                  var v3 = block.readInteger(as: UInt32.self)
+                var v1 = block.readInteger(as: UInt32.self),
+                var v2 = block.readInteger(as: UInt32.self),
+                var v3 = block.readInteger(as: UInt32.self)
             else {
                 preconditionFailure("check block size")
             }
@@ -78,18 +78,18 @@ enum InsecureEncryptionAlgorithm {
         var ciphertext = ciphertext
         var key = key
         guard let k0 = key.readInteger(as: UInt32.self),
-              let k1 = key.readInteger(as: UInt32.self),
-              let k2 = key.readInteger(as: UInt32.self),
-              let k3 = key.readInteger(as: UInt32.self)
+            let k1 = key.readInteger(as: UInt32.self),
+            let k2 = key.readInteger(as: UInt32.self),
+            let k3 = key.readInteger(as: UInt32.self)
         else {
             preconditionFailure("check key size")
         }
 
         while var block = ciphertext.readSlice(length: 16) {
             guard var v0 = block.readInteger(as: UInt32.self),
-                  var v1 = block.readInteger(as: UInt32.self),
-                  var v2 = block.readInteger(as: UInt32.self),
-                  var v3 = block.readInteger(as: UInt32.self)
+                var v1 = block.readInteger(as: UInt32.self),
+                var v2 = block.readInteger(as: UInt32.self),
+                var v3 = block.readInteger(as: UInt32.self)
             else {
                 preconditionFailure("check block size")
             }
@@ -171,7 +171,7 @@ class TestTransportProtection: NIOSSHTransportProtection {
         let index = source.readerIndex
 
         guard let ciphertextView = source.viewBytes(at: index, length: Self.cipherBlockSize),
-              ciphertextView.count > 0, ciphertextView.count % Self.cipherBlockSize == 0
+            ciphertextView.count > 0, ciphertextView.count % Self.cipherBlockSize == 0
         else {
             // The only way this fails is if the payload doesn't match this encryption scheme.
             throw NIOSSHError.invalidEncryptedPacketLength
@@ -200,7 +200,7 @@ class TestTransportProtection: NIOSSHTransportProtection {
         // First block is expected to be decoded by decodeFirstBlock
         if source.readableBytes > self.macBytes {
             guard let ciphertext = source.readSlice(length: source.readableBytes - 32),
-                  ciphertext.readableBytes > 0, ciphertext.readableBytes % Self.cipherBlockSize == 0
+                ciphertext.readableBytes > 0, ciphertext.readableBytes % Self.cipherBlockSize == 0
             else {
                 // The only way this fails is if the payload doesn't match this encryption scheme.
                 throw NIOSSHError.invalidEncryptedPacketLength

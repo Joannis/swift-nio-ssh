@@ -738,7 +738,7 @@ extension ByteBuffer {
     mutating func readUserAuthBannerMessage() -> SSHMessage.UserAuthBannerMessage? {
         self.rewindReaderOnNil { `self` in
             guard let message = self.readSSHStringAsString(),
-                  let languageTag = self.readSSHStringAsString()
+                let languageTag = self.readSSHStringAsString()
             else {
                 return nil
             }

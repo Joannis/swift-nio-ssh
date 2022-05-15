@@ -204,14 +204,14 @@ extension NIOSSHPublicKey {
     }
 
     static var customPublicKeyAlgorithms: [NIOSSHPublicKeyProtocol.Type] {
-        return _CustomAlgorithms.publicKeyAlgorithmsLock.withLock {
-            return _CustomAlgorithms.publicKeyAlgorithms
+        _CustomAlgorithms.publicKeyAlgorithmsLock.withLock {
+            _CustomAlgorithms.publicKeyAlgorithms
         }
     }
 
     static var customSignatures: [NIOSSHSignatureProtocol.Type] {
-        return _CustomAlgorithms.signaturesLock.withLock {
-            return _CustomAlgorithms.signatures
+        _CustomAlgorithms.signaturesLock.withLock {
+            _CustomAlgorithms.signatures
         }
     }
 }
@@ -267,18 +267,18 @@ public enum NIOSSHAlgorithms {
 }
 
 internal var customTransportProtectionSchemes: [NIOSSHTransportProtection.Type] {
-    return _CustomAlgorithms.transportProtectionSchemesLock.withLock {
-        return _CustomAlgorithms.transportProtectionSchemes
+    _CustomAlgorithms.transportProtectionSchemesLock.withLock {
+        _CustomAlgorithms.transportProtectionSchemes
     }
 }
 
 internal var customKeyExchangeAlgorithms: [NIOSSHKeyExchangeAlgorithmProtocol.Type] {
-    return _CustomAlgorithms.keyExchangeAlgorithmsLock.withLock {
-        return _CustomAlgorithms.keyExchangeAlgorithms
+    _CustomAlgorithms.keyExchangeAlgorithmsLock.withLock {
+        _CustomAlgorithms.keyExchangeAlgorithms
     }
 }
 
-fileprivate enum _CustomAlgorithms {
+private enum _CustomAlgorithms {
     static var transportProtectionSchemesLock = Lock()
     static var transportProtectionSchemes = [NIOSSHTransportProtection.Type]()
     static var keyExchangeAlgorithmsLock = Lock()

@@ -269,8 +269,8 @@ extension ByteBuffer {
         // For ECDSA-P256, the key format is `mpint r` followed by `mpint s`.
         // We don't need them as mpints, so let's treat them as strings instead.
         guard var signatureBytes = self.readSSHString(),
-              let rBytes = signatureBytes.readSSHString(),
-              let sBytes = signatureBytes.readSSHString()
+            let rBytes = signatureBytes.readSSHString(),
+            let sBytes = signatureBytes.readSSHString()
         else {
             return nil
         }
@@ -288,8 +288,8 @@ extension ByteBuffer {
         // For ECDSA-P384, the key format is `mpint r` followed by `mpint s`.
         // We don't need them as mpints, so let's treat them as strings instead.
         guard var signatureBytes = self.readSSHString(),
-              let rBytes = signatureBytes.readSSHString(),
-              let sBytes = signatureBytes.readSSHString()
+            let rBytes = signatureBytes.readSSHString(),
+            let sBytes = signatureBytes.readSSHString()
         else {
             return nil
         }
@@ -307,8 +307,8 @@ extension ByteBuffer {
         // For ECDSA-P521, the key format is `mpint r` followed by `mpint s`.
         // We don't need them as mpints, so let's treat them as strings instead.
         guard var signatureBytes = self.readSSHString(),
-              let rBytes = signatureBytes.readSSHString(),
-              let sBytes = signatureBytes.readSSHString()
+            let rBytes = signatureBytes.readSSHString(),
+            let sBytes = signatureBytes.readSSHString()
         else {
             return nil
         }

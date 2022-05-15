@@ -1047,8 +1047,7 @@ private extension SSHKeyExchangeStateMachineTests {
                                              currentStage: SSHKeyExchangeStateMachineTests.HandshakeStages,
                                              stateMachine: inout SSHKeyExchangeStateMachine,
                                              file: StaticString = #file,
-                                             line: UInt = #line) throws
-    {
+                                             line: UInt = #line) throws {
         if allowedStages.contains(currentStage) {
             // If this stage is allowed, don't try to send the message. Assume it's covered in the mainline.
             return

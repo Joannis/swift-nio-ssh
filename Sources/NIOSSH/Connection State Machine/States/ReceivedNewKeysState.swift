@@ -38,8 +38,7 @@ extension SSHConnectionStateMachine {
         var userAuthStateMachine: UserAuthenticationStateMachine
 
         init(keyExchangeState state: KeyExchangeState,
-             loop: EventLoop)
-        {
+             loop: EventLoop) {
             self.role = state.role
             self.parser = state.parser
             self.serializer = state.serializer
