@@ -87,17 +87,17 @@ extension SSHChannelData.DataType: ExpressibleByIntegerLiteral {
 }
 
 extension SSHChannelData {
-    init(_ message: SSHMessage.ChannelDataMessage) {
+    internal init(_ message: SSHMessage.ChannelDataMessage) {
         self = .init(type: .channel, data: .byteBuffer(message.data))
     }
 
-    init(_ message: SSHMessage.ChannelExtendedDataMessage) {
+    internal init(_ message: SSHMessage.ChannelExtendedDataMessage) {
         self = .init(type: .init(message.dataTypeCode), data: .byteBuffer(message.data))
     }
 }
 
 extension SSHChannelData.DataType {
-    init(_ code: SSHMessage.ChannelExtendedDataMessage.Code) {
+    internal init(_ code: SSHMessage.ChannelExtendedDataMessage.Code) {
         switch code {
         case .stderr:
             self = .stdErr
@@ -106,7 +106,7 @@ extension SSHChannelData.DataType {
 }
 
 extension SSHMessage {
-    init(_ channelData: SSHChannelData, recipientChannel: UInt32) {
+    internal init(_ channelData: SSHChannelData, recipientChannel: UInt32) {
         guard case .byteBuffer(let bb) = channelData.data else {
             // TODO: Support fileregion!
             preconditionFailure("FileRegion not supported at this time")

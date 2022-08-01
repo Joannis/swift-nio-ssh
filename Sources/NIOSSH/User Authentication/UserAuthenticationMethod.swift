@@ -29,7 +29,7 @@ public struct NIOSSHAvailableUserAuthenticationMethods: OptionSet {
 }
 
 extension NIOSSHAvailableUserAuthenticationMethods {
-    init(_ message: SSHMessage.UserAuthFailureMessage) {
+    internal init(_ message: SSHMessage.UserAuthFailureMessage) {
         self = .init()
 
         for message in message.authentications {
@@ -47,7 +47,7 @@ extension NIOSSHAvailableUserAuthenticationMethods {
         }
     }
 
-    var strings: [Substring] {
+    internal var strings: [Substring] {
         guard self != .init() else {
             return []
         }

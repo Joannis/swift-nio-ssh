@@ -106,7 +106,7 @@ public extension SSHChannelType {
 }
 
 extension SSHChannelType {
-    init(_ message: SSHMessage.ChannelOpenMessage) {
+    internal init(_ message: SSHMessage.ChannelOpenMessage) {
         switch message.type {
         case .session:
             self = .session
@@ -119,7 +119,7 @@ extension SSHChannelType {
 }
 
 extension SSHMessage.ChannelOpenMessage.ChannelType {
-    init(_ type: SSHChannelType) {
+    internal init(_ type: SSHChannelType) {
         switch type {
         case .session:
             self = .session

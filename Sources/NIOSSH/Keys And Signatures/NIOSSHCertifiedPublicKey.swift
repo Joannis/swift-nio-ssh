@@ -332,8 +332,6 @@ extension NIOSSHCertifiedPublicKey {
             return Self.p384KeyPrefix
         case .ecdsaP521:
             return Self.p521KeyPrefix
-        case .custom(let backingKey):
-            return backingKey.publicKeyPrefix.utf8
         case .certified:
             preconditionFailure("base key cannot be certified")
         }
@@ -535,7 +533,7 @@ extension NIOSSHCertifiedPublicKey {
 
 extension NIOSSHCertifiedPublicKey.Backing: Hashable {
     static func == (lhs: NIOSSHCertifiedPublicKey.Backing, rhs: NIOSSHCertifiedPublicKey.Backing) -> Bool {
-        lhs.nonce == rhs.nonce &&
+        (lhs.nonce == rhs.nonce &&
             lhs.serial == rhs.serial &&
             lhs.type == rhs.type &&
             lhs.key == rhs.key &&
@@ -546,7 +544,7 @@ extension NIOSSHCertifiedPublicKey.Backing: Hashable {
             lhs.criticalOptions == rhs.criticalOptions &&
             lhs.extensions == rhs.extensions &&
             lhs.signatureKey == rhs.signatureKey &&
-            lhs.signature == rhs.signature
+            lhs.signature == rhs.signature)
     }
 
     func hash(into hasher: inout Hasher) {
