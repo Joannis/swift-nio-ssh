@@ -397,7 +397,7 @@ public extension NIOSSHCertifiedPublicKey {
     ///
     /// For extensibility purposes this is not defined as an enumeration, but instead as a `RawRepresentable` type
     /// wrapping the base type.
-    struct CertificateType: RawRepresentable {
+    public struct CertificateType: RawRepresentable {
         public var rawValue: UInt32
 
         public init(rawValue: UInt32) {
