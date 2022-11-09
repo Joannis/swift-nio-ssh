@@ -201,8 +201,7 @@ extension SSHChannelMultiplexer {
                                       initializer: initializer,
                                       localChannelID: channelID,
                                       targetWindowSize: Int32(self.maximumPacketSize),
-                                      initialOutboundWindowSize: 0,
-                                      maximumPacketSize: self.maximumPacketSize) // The initial outbound window size is presumed to be 0 until we're told otherwise.
+                                      initialOutboundWindowSize: 0) // The initial outbound window size is presumed to be 0 until we're told otherwise.
 
         self.channels[channelID] = channel
         return channel

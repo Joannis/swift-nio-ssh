@@ -16,6 +16,12 @@
 public struct SSHServerConfiguration {
     /// The user authentication delegate to be used with this server.
     public var userAuthDelegate: NIOSSHServerUserAuthenticationDelegate
+    
+    /// The enabled TransportProtectionSchemes
+    public var transportProtectionSchemes: [NIOSSHTransportProtection.Type] = SSHConnectionStateMachine.bundledTransportProtectionSchemes
+    
+    /// The enabled KeyExchangeAlgorithms
+    public var keyExchangeAlgorithms: [NIOSSHKeyExchangeAlgorithmProtocol.Type] = SSHKeyExchangeStateMachine.bundledKeyExchangeImplementations
 
     /// The global request delegate to be used with this server.
     public var globalRequestDelegate: GlobalRequestDelegate
@@ -25,6 +31,9 @@ public struct SSHServerConfiguration {
 
     /// The ssh banner to display to clients upon authentication
     public var banner: UserAuthBanner?
+    
+    /// The maximum packet size that this NIOSSH server will accept
+    public var maximumPacketSize = SSHPacketParser.defaultMaximumPacketSize
 
     public init(hostKeys: [NIOSSHPrivateKey], userAuthDelegate: NIOSSHServerUserAuthenticationDelegate, globalRequestDelegate: GlobalRequestDelegate? = nil, banner: UserAuthBanner? = nil) {
         self.hostKeys = hostKeys

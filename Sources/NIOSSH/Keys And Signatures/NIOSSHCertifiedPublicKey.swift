@@ -334,6 +334,8 @@ extension NIOSSHCertifiedPublicKey {
             return Self.p521KeyPrefix
         case .certified:
             preconditionFailure("base key cannot be certified")
+        case .custom(let custom):
+            return custom.publicKeyPrefix.utf8
         }
     }
 
