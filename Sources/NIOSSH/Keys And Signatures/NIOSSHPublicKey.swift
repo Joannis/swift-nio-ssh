@@ -349,7 +349,7 @@ extension NIOSSHPublicKey.BackingKey: Hashable {
 
 extension NIOSSHPublicKey {
     @discardableResult
-    func write(to buffer: inout ByteBuffer) -> Int {
+    public func write(to buffer: inout ByteBuffer) -> Int {
         buffer.writeSSHHostKey(self)
     }
 

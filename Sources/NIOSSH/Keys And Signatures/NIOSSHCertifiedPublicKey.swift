@@ -389,7 +389,7 @@ extension NIOSSHCertifiedPublicKey: CustomDebugStringConvertible {
     }
 }
 
-public extension NIOSSHCertifiedPublicKey {
+extension NIOSSHCertifiedPublicKey {
     /// A `NIOSSHCertifiedPublicKey.CertificateType` defines the type of a given certificate.
     ///
     /// In SSH there are essentially two types in standard use: `.user` and `.host`. Certificates of type
