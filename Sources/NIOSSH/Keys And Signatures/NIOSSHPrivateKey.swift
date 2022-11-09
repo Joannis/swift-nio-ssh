@@ -93,7 +93,7 @@ extension NIOSSHPrivateKey {
 }
 
 extension NIOSSHPrivateKey {
-    func sign<DigestBytes: Digest>(digest: DigestBytes) throws -> NIOSSHSignature {
+    public func sign<DigestBytes: Digest>(digest: DigestBytes) throws -> NIOSSHSignature {
         switch self.backingKey {
         case .ed25519(let key):
             let signature = try digest.withUnsafeBytes { ptr in
