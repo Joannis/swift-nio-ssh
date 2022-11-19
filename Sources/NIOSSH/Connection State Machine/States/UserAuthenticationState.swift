@@ -33,6 +33,8 @@ extension SSHConnectionStateMachine {
         /// The backing state machine.
         var userAuthStateMachine: UserAuthenticationStateMachine
 
+        let connectionAttributes: SSHConnectionStateMachine.Attributes
+
         init(sentNewKeysState state: SentNewKeysState) {
             self.role = state.role
             self.parser = state.parser
@@ -40,6 +42,7 @@ extension SSHConnectionStateMachine {
             self.userAuthStateMachine = state.userAuthStateMachine
             self.remoteVersion = state.remoteVersion
             self.sessionIdentifier = state.sessionIdentifier
+            self.connectionAttributes = state.connectionAttributes
         }
 
         init(receivedNewKeysState state: ReceivedNewKeysState) {
@@ -49,6 +52,7 @@ extension SSHConnectionStateMachine {
             self.userAuthStateMachine = state.userAuthStateMachine
             self.remoteVersion = state.remoteVersion
             self.sessionIdentifier = state.sessionIdentifier
+            self.connectionAttributes = state.connectionAttributes
         }
     }
 }

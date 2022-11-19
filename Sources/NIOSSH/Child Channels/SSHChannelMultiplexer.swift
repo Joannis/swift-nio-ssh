@@ -34,7 +34,7 @@ final class SSHChannelMultiplexer {
     /// Whether new channels are allowed. Set to `false` once the parent channel is shut down at the TCP level.
     private var canCreateNewChannels: Bool
 
-    private let maximumPacketSize: Int
+    internal let maximumPacketSize: Int
 
     init(delegate: SSHMultiplexerDelegate, allocator: ByteBufferAllocator, childChannelInitializer: SSHChildChannel.Initializer?, maximumPacketSize: Int = 1 << 17) {
         self.channels = [:]
@@ -96,6 +96,9 @@ extension SSHChannelMultiplexer {
             self.erroredChannels.append(channelID)
         }
     }
+    
+    // The username which the server accepted in authorization
+    var username: String? { delegate?.username }
 }
 
 // MARK: Calls from SSH handlers.
@@ -222,6 +225,8 @@ extension SSHChannelMultiplexer {
 protocol SSHMultiplexerDelegate {
     var channel: Channel? { get }
 
+    var username: String? { get }
+    
     func writeFromChildChannel(_: SSHMessage, _: EventLoopPromise<Void>?)
 
     func flushFromChildChannel()

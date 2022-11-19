@@ -29,12 +29,15 @@ extension SSHConnectionStateMachine {
 
         internal var sessionIdentifier: ByteBuffer
 
+        internal let connectionAttributes: SSHConnectionStateMachine.Attributes
+
         init(_ previous: UserAuthenticationState) {
             self.role = previous.role
             self.serializer = previous.serializer
             self.parser = previous.parser
             self.remoteVersion = previous.remoteVersion
             self.sessionIdentifier = previous.sessionIdentifier
+            self.connectionAttributes = previous.connectionAttributes
         }
 
         init(_ previous: RekeyingReceivedNewKeysState) {
@@ -43,6 +46,7 @@ extension SSHConnectionStateMachine {
             self.parser = previous.parser
             self.remoteVersion = previous.remoteVersion
             self.sessionIdentifier = previous.sessionIdentifier
+            self.connectionAttributes = previous.connectionAttributes
         }
 
         init(_ previous: RekeyingSentNewKeysState) {
@@ -51,6 +55,7 @@ extension SSHConnectionStateMachine {
             self.parser = previous.parser
             self.remoteVersion = previous.remoteVersion
             self.sessionIdentifier = previous.sessionIdentifier
+            self.connectionAttributes = previous.connectionAttributes
         }
     }
 }

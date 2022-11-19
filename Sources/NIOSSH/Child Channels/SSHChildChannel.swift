@@ -229,6 +229,8 @@ extension SSHChildChannel: Channel, ChannelCore {
             return self.type! as! Option.Value
         case _ as SSHChildChannelOptions.Types.PeerMaximumMessageLengthOption:
             return self.peerMaxMessageSize as! Option.Value
+        case _ as SSHChildChannelOptions.Types.UsernameOption:
+            return multiplexer.username as! Option.Value
         case _ as ChannelOptions.Types.AutoReadOption:
             return self.autoRead as! Option.Value
         case _ as ChannelOptions.Types.AllowRemoteHalfClosureOption:
@@ -475,7 +477,7 @@ extension SSHChildChannel: Channel, ChannelCore {
             let message = SSHMessage.ChannelOpenConfirmationMessage(recipientChannel: self.state.remoteChannelIdentifier!,
                                                                     senderChannel: self.state.localChannelIdentifier,
                                                                     initialWindowSize: self.windowManager.targetWindowSize,
-                                                                    maximumPacketSize: 1 << 24) // This is a weirdly hard-coded choice.
+                                                                    maximumPacketSize: UInt32(self.multiplexer.maximumPacketSize)) // This is a weirdly hard-coded choice.
             self.processOutboundMessage(.channelOpenConfirmation(message), promise: nil)
             self.writePendingToMultiplexer()
         } else if !self.state.isClosed {
@@ -483,7 +485,7 @@ extension SSHChildChannel: Channel, ChannelCore {
             let message = SSHMessage.ChannelOpenMessage(type: .init(self.type!),
                                                         senderChannel: self.state.localChannelIdentifier,
                                                         initialWindowSize: self.windowManager.targetWindowSize,
-                                                        maximumPacketSize: 1 << 24)
+                                                        maximumPacketSize: UInt32(self.multiplexer.maximumPacketSize))
             self.processOutboundMessage(.channelOpen(message), promise: nil)
             self.writePendingToMultiplexer()
         } else {
