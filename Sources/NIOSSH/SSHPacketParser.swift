@@ -144,9 +144,14 @@ struct SSHPacketParser {
             }
 
             if slice[index] == 10 {
-                let version = String(decoding: slice[slice.startIndex ..< index], as: UTF8.self)
+                var version = String(decoding: slice[slice.startIndex ..< index], as: UTF8.self)
                 // read \r\n
                 self.buffer.moveReaderIndex(forwardBy: slice.startIndex.distance(to: index).advanced(by: 1))
+                if version.last == "\r" {
+                    // \r
+                    version.removeLast()
+                }
+                
                 return version
             }
         }
