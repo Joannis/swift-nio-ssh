@@ -26,6 +26,8 @@ extension SSHConnectionStateMachine {
         /// The packet serializer used by this state machine.
         var serializer: SSHPacketSerializer
 
+        let connectionAttributes: SSHConnectionStateMachine.Attributes
+        
         private let allocator: ByteBufferAllocator
 
         init(idleState state: IdleState, allocator: ByteBufferAllocator, maximumPacketSize: Int) {
@@ -34,6 +36,7 @@ extension SSHConnectionStateMachine {
 
             self.parser = SSHPacketParser(allocator: allocator, maximumPacketSize: maximumPacketSize)
             self.allocator = allocator
+            self.connectionAttributes = state.connectionAttributes
         }
     }
 }

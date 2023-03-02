@@ -34,6 +34,8 @@ extension SSHConnectionStateMachine {
         /// The backing state machine.
         var keyExchangeStateMachine: SSHKeyExchangeStateMachine
 
+        let connectionAttributes: SSHConnectionStateMachine.Attributes
+
         init(_ previousState: RekeyingState) {
             self.role = previousState.role
             self.parser = previousState.parser
@@ -41,6 +43,7 @@ extension SSHConnectionStateMachine {
             self.remoteVersion = previousState.remoteVersion
             self.sessionIdentifier = previousState.sessionIdentifier
             self.keyExchangeStateMachine = previousState.keyExchangeStateMachine
+            self.connectionAttributes = previousState.connectionAttributes
         }
     }
 }

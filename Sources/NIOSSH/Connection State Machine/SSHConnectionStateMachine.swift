@@ -57,15 +57,25 @@ struct SSHConnectionStateMachine {
         case sentDisconnect(SSHConnectionRole)
     }
 
+    class Attributes {
+        var username: String? = nil
+    }
+    
     /// The state of this state machine.
     private var state: State
+    
+    /// Attributes of the connection which can be changed by messages handlers
+    private let attributes: Attributes
+    
+    var username: String? { attributes.username }
 
     static let bundledTransportProtectionSchemes: [NIOSSHTransportProtection.Type] = [
         AES256GCMOpenSSHTransportProtection.self, AES128GCMOpenSSHTransportProtection.self,
     ]
 
     init(role: SSHConnectionRole) {
-        self.state = .idle(IdleState(role: role))
+        self.attributes = Attributes()
+        self.state = .idle(IdleState(role: role, attributes: attributes))
     }
 
     func start() -> SSHMultiMessage? {
