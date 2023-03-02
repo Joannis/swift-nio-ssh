@@ -143,10 +143,10 @@ struct SSHPacketParser {
                 throw NIOSSHError.excessiveVersionLength
             }
 
-            if slice[index] == 13, index.advanced(by: 1) < slice.endIndex, slice[index.advanced(by: 1)] == 10 {
+            if slice[index] == 10 {
                 let version = String(decoding: slice[slice.startIndex ..< index], as: UTF8.self)
                 // read \r\n
-                self.buffer.moveReaderIndex(forwardBy: slice.startIndex.distance(to: index).advanced(by: 2))
+                self.buffer.moveReaderIndex(forwardBy: slice.startIndex.distance(to: index).advanced(by: 1))
                 return version
             }
         }

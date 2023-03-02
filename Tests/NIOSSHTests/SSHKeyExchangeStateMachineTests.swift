@@ -132,7 +132,7 @@ final class SSHKeyExchangeStateMachineTests: XCTestCase {
         }
     }
 
-    private func assertUnexpectedMessage<T>(file: StaticString = #file, line: UInt = #line, _ messageFactory: () throws -> T) {
+    private func assertUnexpectedMessage<T>(file: StaticString = #filePath, line: UInt = #line, _ messageFactory: () throws -> T) {
         XCTAssertThrowsError(try messageFactory(), file: file, line: line) { error in
             XCTAssertEqual(error as? SSHKeyExchangeStateMachine.SSHKeyExchangeError, SSHKeyExchangeStateMachine.SSHKeyExchangeError.unexpectedMessage, file: file, line: line)
         }
@@ -1042,12 +1042,12 @@ final class SSHKeyExchangeStateMachineTests: XCTestCase {
 
 private extension SSHKeyExchangeStateMachineTests {
     /// A simple function that passes a message to the state machine and erases the return value.
-    func handleUnexpectedMessageErasingValue(_ message: SSHMessage,
-                                             allowedStages: SSHKeyExchangeStateMachineTests.HandshakeStages,
-                                             currentStage: SSHKeyExchangeStateMachineTests.HandshakeStages,
-                                             stateMachine: inout SSHKeyExchangeStateMachine,
-                                             file: StaticString = #file,
-                                             line: UInt = #line) throws {
+    fileprivate func handleUnexpectedMessageErasingValue(_ message: SSHMessage,
+                                                         allowedStages: SSHKeyExchangeStateMachineTests.HandshakeStages,
+                                                         currentStage: SSHKeyExchangeStateMachineTests.HandshakeStages,
+                                                         stateMachine: inout SSHKeyExchangeStateMachine,
+                                                         file: StaticString = #filePath,
+                                                         line: UInt = #line) throws {
         if allowedStages.contains(currentStage) {
             // If this stage is allowed, don't try to send the message. Assume it's covered in the mainline.
             return
