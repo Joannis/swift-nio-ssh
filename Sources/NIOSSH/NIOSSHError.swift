@@ -58,6 +58,8 @@ extension NIOSSHError {
     internal static let insufficientPadding = NIOSSHError(type: .insufficientPadding, diagnostics: nil)
 
     internal static let excessPadding = NIOSSHError(type: .excessPadding, diagnostics: nil)
+    
+    internal static let invalidMacSelected = NIOSSHError(type: .invalidMacSelected, diagnostics: nil)
 
     @inline(never)
     internal static func unknownPublicKey(algorithm: String) -> NIOSSHError {
@@ -185,6 +187,7 @@ extension NIOSSHError {
             case invalidOpenSSHPublicKey
             case invalidCertificate
             case excessiveVersionLength
+            case invalidMacSelected
         }
 
         private var base: Base
@@ -219,6 +222,9 @@ extension NIOSSHError {
 
         /// More padding bytes were supposed to be present than actually are present in a packet.
         public static let excessPadding: ErrorType = .init(.excessPadding)
+        
+        /// The selected MAC was not valid for this transport method
+        public static let invalidMacSelected: ErrorType = .init(.invalidMacSelected)
 
         /// The public key type provided is not recognised.
         public static let unknownPublicKey: ErrorType = .init(.unknownPublicKey)

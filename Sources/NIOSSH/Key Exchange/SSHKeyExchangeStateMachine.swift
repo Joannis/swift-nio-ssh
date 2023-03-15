@@ -223,7 +223,7 @@ struct SSHKeyExchangeStateMachine {
                     clientKeyExchangeMessage: message,
                     serverHostKey: negotiated.negotiatedHostKey(configuration.hostKeys),
                     initialExchangeBytes: &self.initialExchangeBytes,
-                    allocator: self.allocator, expectedKeySizes: negotiated.negotiatedProtection.keySizes
+                    allocator: self.allocator, expectedKeySizes: negotiated.negotiatedProtection.keySizes(forMac: negotiated.negotiatedMacAlgorithm.map { String($0) })
                 )
 
                 let message = SSHMessage.keyExchangeReply(.init(hostKey: reply.hostKey, publicKey: reply.publicKey, signature: reply.signature))
@@ -264,10 +264,15 @@ struct SSHKeyExchangeStateMachine {
                     ),
                     initialExchangeBytes: &self.initialExchangeBytes,
                     allocator: self.allocator,
-                    expectedKeySizes: negotiated.negotiatedProtection.keySizes
+                    expectedKeySizes: negotiated.negotiatedProtection.keySizes(forMac: negotiated.negotiatedMacAlgorithm.map { String($0) })
                 )
 
-                self.state = .keysExchanged(result: result, protection: try negotiated.negotiatedProtection.init(initialKeys: result.keys), negotiated: negotiated)
+                assert({
+                    return negotiated.negotiatedMacAlgorithm.map { negotiated.negotiatedProtection.macNames.contains(String($0)) } ?? negotiated.negotiatedProtection.macNames.isEmpty
+                }(), "Negotiated MAC was not supported by negotiated transport protection")
+                
+                let protection = try negotiated.negotiatedProtection.init(initialKeys: result.keys, mac: negotiated.negotiatedMacAlgorithm.map { String($0) })
+                self.state = .keysExchanged(result: result, protection: protection, negotiated: negotiated)
 
                 // Ok, we've modified the state, now we can ask the user if they like this host key.
                 guard case .client(let clientConfig) = self.role else {
@@ -290,7 +295,13 @@ struct SSHKeyExchangeStateMachine {
         switch self.state {
         case .keyExchangeInitReceived(result: let result, negotiated: let negotiated):
             precondition(self.role.isServer, "Clients cannot enter key exchange init received")
-            self.state = .keysExchanged(result: result, protection: try negotiated.negotiatedProtection.init(initialKeys: result.keys), negotiated: negotiated)
+            
+            assert({
+                return negotiated.negotiatedMacAlgorithm.map { negotiated.negotiatedProtection.macNames.contains(String($0)) } ?? negotiated.negotiatedProtection.macNames.isEmpty
+            }(), "Negotiated MAC was not supported by negotiated transport protection")
+            
+            let protection = try negotiated.negotiatedProtection.init(initialKeys: result.keys, mac: negotiated.negotiatedMacAlgorithm.map { String($0) })
+            self.state = .keysExchanged(result: result, protection: protection, negotiated: negotiated)
         case .idle, .keyExchangeSent, .keyExchangeReceived, .awaitingKeyExchangeInit, .awaitingKeyExchangeInitInvalidGuess, .keyExchangeInitSent, .keysExchanged, .newKeysSent, .newKeysReceived, .complete:
             // This is a precondition not a throw because we control the sending of this message.
             preconditionFailure("Cannot send ECDH key exchange message in state \(self.state)")
@@ -336,12 +347,12 @@ struct SSHKeyExchangeStateMachine {
         }
 
         // Ok, now we need to find the right transport protection scheme. This can technically fail.
-        guard let scheme = self.transportProtectionSchemes.first(where: { $0.cipherName == clientEncryption && ($0.macName == nil || $0.macName! == clientMAC) }) else {
+        guard let scheme = self.transportProtectionSchemes.first(where: { $0.cipherName == clientEncryption && ($0.macNames.isEmpty || $0.macNames.contains(String(clientMAC))) }) else {
             throw NIOSSHError.keyExchangeNegotiationFailure
         }
 
         // Great, we have a protection scheme. Build the negotiation result.
-        return NegotiationResult(negotiatedKeyExchangeAlgorithm: keyExchange, negotiatedHostKeyAlgorithm: hostKey, negotiatedProtection: scheme)
+        return NegotiationResult(negotiatedKeyExchangeAlgorithm: keyExchange, negotiatedHostKeyAlgorithm: hostKey, negotiatedMacAlgorithm: clientMAC, negotiatedProtection: scheme)
     }
 
     private func negotiatedKeyExchangeAlgorithm(peerKeyExchangeAlgorithms: [Substring], peerHostKeyAlgorithms: [Substring]) throws -> (keyExchange: Substring, hostKey: Substring) {
@@ -491,7 +502,9 @@ struct SSHKeyExchangeStateMachine {
 
     /// The MAC algorithms supported by this peer, in order of preference.
     private var supportedMacAlgorithms: [Substring] {
-        let schemes = self.transportProtectionSchemes.compactMap { $0.macName.map { Substring($0) } }
+        let schemes = self.transportProtectionSchemes.reduce([Substring]()) { schemes, transport in
+            schemes + transport.macNames.map { Substring($0) }
+        }
 
         // We do a weird thing here: if there are no MAC schemes, we lie and put one in. This is
         // because some schemes (such as AES-GCM in OpenSSH mode) ignore the MAC negotiation.
@@ -529,6 +542,8 @@ extension SSHKeyExchangeStateMachine {
         var negotiatedKeyExchangeAlgorithm: Substring
 
         var negotiatedHostKeyAlgorithm: Substring
+        
+        var negotiatedMacAlgorithm: Substring?
 
         var negotiatedProtection: NIOSSHTransportProtection.Type
 

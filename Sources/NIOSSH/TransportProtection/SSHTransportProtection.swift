@@ -48,21 +48,21 @@ public protocol NIOSSHTransportProtection: AnyObject {
     /// The name of the cipher portion of this transport protection scheme as negotiated on the wire.
     static var cipherName: String { get }
 
-    /// The name of the MAC portion of this transport protection scheme as negotiated on the wire. May be nil, in which
+    /// The names of the supported MAC portion of this transport protection scheme as negotiated on the wire. May be empty, in which
     /// case this scheme does not care about the MAC field because it is an @openssh.org style AEAD construction.
-    static var macName: String? { get }
+    static var macNames: [String] { get }
 
     /// The block size of the cipher in this protection scheme.
     static var cipherBlockSize: Int { get }
 
     /// The key sizes required for this protection scheme.
-    static var keySizes: ExpectedKeySizes { get }
+    static func keySizes(forMac mac: String?) throws -> ExpectedKeySizes
 
     /// The number of bytes consumed by the MAC
     var macBytes: Int { get }
 
     /// Create a new instance of this transport protection scheme with the given keys.
-    init(initialKeys: NIOSSHSessionKeys) throws
+    init(initialKeys: NIOSSHSessionKeys, mac: String?) throws
 
     /// A rekey has occurred and the encryption keys need to be changed.
     func updateKeys(_ newKeys: NIOSSHSessionKeys) throws

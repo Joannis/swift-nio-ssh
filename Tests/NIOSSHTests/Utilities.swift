@@ -126,8 +126,8 @@ class TestTransportProtection: NIOSSHTransportProtection {
         "insecure-tiny-encription-cipher"
     }
 
-    static var macName: String? {
-        nil
+    static var macNames: [String] {
+        []
     }
 
     static var keySizes: ExpectedKeySizes {
