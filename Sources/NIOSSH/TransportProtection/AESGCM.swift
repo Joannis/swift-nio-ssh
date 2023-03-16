@@ -49,12 +49,6 @@ internal class AESGCMTransportProtection {
             throw NIOSSHError.invalidKeySize
         }
         
-        if let mac = mac, !Self.macNames.contains(mac) {
-            throw NIOSSHError.invalidMacSelected
-        } else if !Self.macNames.isEmpty {
-            throw NIOSSHError.invalidMacSelected
-        }
-
         self.keySizes = keySizes
         self.outboundEncryptionKey = initialKeys.outboundEncryptionKey
         self.inboundEncryptionKey = initialKeys.inboundEncryptionKey

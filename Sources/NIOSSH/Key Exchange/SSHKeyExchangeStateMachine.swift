@@ -267,10 +267,6 @@ struct SSHKeyExchangeStateMachine {
                     expectedKeySizes: negotiated.negotiatedProtection.keySizes(forMac: negotiated.negotiatedMacAlgorithm.map { String($0) })
                 )
 
-                assert({
-                    return negotiated.negotiatedMacAlgorithm.map { negotiated.negotiatedProtection.macNames.contains(String($0)) } ?? negotiated.negotiatedProtection.macNames.isEmpty
-                }(), "Negotiated MAC was not supported by negotiated transport protection")
-                
                 let protection = try negotiated.negotiatedProtection.init(initialKeys: result.keys, mac: negotiated.negotiatedMacAlgorithm.map { String($0) })
                 self.state = .keysExchanged(result: result, protection: protection, negotiated: negotiated)
 
@@ -295,10 +291,6 @@ struct SSHKeyExchangeStateMachine {
         switch self.state {
         case .keyExchangeInitReceived(result: let result, negotiated: let negotiated):
             precondition(self.role.isServer, "Clients cannot enter key exchange init received")
-            
-            assert({
-                return negotiated.negotiatedMacAlgorithm.map { negotiated.negotiatedProtection.macNames.contains(String($0)) } ?? negotiated.negotiatedProtection.macNames.isEmpty
-            }(), "Negotiated MAC was not supported by negotiated transport protection")
             
             let protection = try negotiated.negotiatedProtection.init(initialKeys: result.keys, mac: negotiated.negotiatedMacAlgorithm.map { String($0) })
             self.state = .keysExchanged(result: result, protection: protection, negotiated: negotiated)
