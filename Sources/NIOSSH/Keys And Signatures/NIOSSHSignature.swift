@@ -115,7 +115,7 @@ extension NIOSSHSignature.BackingSignature: Hashable {
             hasher.combine(sig.rawRepresentation)
         case .custom(let sig):
             hasher.combine(4)
-            hasher.combine(sig.signaturePrefix)
+            hasher.combine(sig.signaturePrefixes)
             hasher.combine(sig.rawRepresentation)
         }
     }
@@ -235,9 +235,11 @@ extension ByteBuffer {
                 return try buffer.readECDSAP521Signature()
             } else {
                 for signature in NIOSSHPublicKey.customSignatures {
-                    if bytesView.elementsEqual(signature.signaturePrefix.utf8) {
-                        let signature = try signature.read(from: &buffer)
-                        return NIOSSHSignature(backingSignature: .custom(signature))
+                    for prefix in signature.signaturePrefixes {
+                        if bytesView.elementsEqual(prefix.utf8) {
+                            let signature = try signature.read(from: &buffer)
+                            return NIOSSHSignature(backingSignature: .custom(signature))
+                        }
                     }
                 }
 

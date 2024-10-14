@@ -691,7 +691,7 @@ extension ByteBuffer {
                         return nil
                     }
 
-                    guard algorithmName.readableBytesView.elementsEqual(publicKey.keyPrefix) else {
+                    guard publicKey.keyPrefixes.contains(where: { $0.elementsEqual(algorithmName.readableBytesView) }) else {
                         throw NIOSSHError.invalidSSHMessage(reason: "algorithm and key mismatch in user auth request")
                     }
 
@@ -765,7 +765,7 @@ extension ByteBuffer {
             }
 
             // Validate consistency here.
-            guard publicKeyType.readableBytesView.elementsEqual(publicKey.keyPrefix) else {
+            guard publicKey.keyPrefixes.contains(where: { $0.elementsEqual(publicKeyType.readableBytesView) }) else {
                 throw NIOSSHError.invalidSSHMessage(reason: "inconsistent key type")
             }
 

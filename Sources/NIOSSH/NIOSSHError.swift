@@ -127,8 +127,8 @@ extension NIOSSHError {
     }
 
     @inline(never)
-    internal static func invalidHostKeyForKeyExchange(expected: Substring, got actual: String.UTF8View) -> NIOSSHError {
-        NIOSSHError(type: .invalidHostKeyForKeyExchange, diagnostics: "Expected \(String(expected)), got \(String(actual))")
+    internal static func invalidHostKeyForKeyExchange(expected: Substring, got actual: [String.UTF8View]) -> NIOSSHError {
+        NIOSSHError(type: .invalidHostKeyForKeyExchange, diagnostics: "Expected \(String(expected)), got \(actual)")
     }
 
     @inline(never)

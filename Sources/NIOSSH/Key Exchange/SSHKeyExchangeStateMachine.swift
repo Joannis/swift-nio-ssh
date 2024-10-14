@@ -251,9 +251,8 @@ struct SSHKeyExchangeStateMachine {
         case .keyExchangeInitSent(exchange: var exchanger, negotiated: let negotiated):
             switch self.role {
             case .client:
-                guard message.hostKey.keyPrefix.elementsEqual(negotiated.negotiatedHostKeyAlgorithm.utf8) else {
-                    throw NIOSSHError.invalidHostKeyForKeyExchange(expected: negotiated.negotiatedHostKeyAlgorithm,
-                                                                   got: message.hostKey.keyPrefix)
+                    guard message.hostKey.keyPrefixes.contains(where: { $0.elementsEqual(negotiated.negotiatedHostKeyAlgorithm.utf8) }) else {
+                    throw NIOSSHError.invalidHostKeyForKeyExchange(expected: negotiated.negotiatedHostKeyAlgorithm, got: message.hostKey.keyPrefixes)
                 }
 
                 let result = try exchanger.receiveServerKeyExchangePayload(
@@ -523,7 +522,7 @@ extension SSHKeyExchangeStateMachine {
 
     static var supportedServerHostKeyAlgorithms: [Substring] {
         let bundledAlgorithms = bundledServerHostKeyAlgorithms
-        let customAlgorithms = NIOSSHPublicKey.customPublicKeyAlgorithms.map { Substring($0.publicKeyPrefix) }
+        let customAlgorithms = NIOSSHPublicKey.customPublicKeyAlgorithms.flatMap { $0.publicKeyPrefixes.map { Substring($0) } }
 
         return bundledAlgorithms + customAlgorithms
     }

@@ -322,20 +322,20 @@ extension NIOSSHCertifiedPublicKey {
 
     static let ed25519KeyPrefix = "ssh-ed25519-cert-v01@openssh.com".utf8
 
-    internal var keyPrefix: String.UTF8View {
+    internal var keyPrefixes: [String.UTF8View] {
         switch self.key.backingKey {
         case .ed25519:
-            return Self.ed25519KeyPrefix
+            return [Self.ed25519KeyPrefix]
         case .ecdsaP256:
-            return Self.p256KeyPrefix
+            return [Self.p256KeyPrefix]
         case .ecdsaP384:
-            return Self.p384KeyPrefix
+            return [Self.p384KeyPrefix]
         case .ecdsaP521:
-            return Self.p521KeyPrefix
+            return [Self.p521KeyPrefix]
         case .certified:
             preconditionFailure("base key cannot be certified")
         case .custom(let custom):
-            return custom.publicKeyPrefix.utf8
+            return custom.publicKeyPrefixes.map { $0.utf8 }
         }
     }
 

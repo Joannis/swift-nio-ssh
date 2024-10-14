@@ -68,7 +68,7 @@ public struct NIOSSHPrivateKey {
         case .ecdsaP521:
             return ["ecdsa-sha2-nistp521"]
         case .custom(let backingKey):
-            return [Substring(backingKey.keyPrefix)]
+            return backingKey.keyPrefixes.map { Substring($0) }
         #if os(macOS) || os(iOS) || os(watchOS) || os(tvOS)
         case .secureEnclaveP256:
             return ["ecdsa-sha2-nistp256"]

@@ -21,12 +21,12 @@ import NIO
 ///
 /// - See: https://en.wikipedia.org/wiki/Digital_signature
 public protocol NIOSSHSignatureProtocol {
-    /// An identifier that represents the type of signature used in an SSH packet.
-    /// This identifier MUST be unique to the signature implementation.
-    /// The returned value MUST NOT overlap with other signature implementations or a specifications that the signature does not implement.
-    static var signaturePrefix: String { get }
-
-    /// The raw reprentation of this signature as a blob.
+    /// Identifiers that represent the types of signatures used in an SSH packet.
+    /// These identifiers MUST be unique to the signature implementation.
+    /// The returned values MUST NOT overlap with other signature implementations or specifications that the signature does not implement.
+    static var signaturePrefixes: [String] { get }
+    
+    /// The raw representation of this signature as a blob.
     var rawRepresentation: Data { get }
 
     /// Serializes and writes the signature to the buffer. The calling function SHOULD NOT keep track of the size of the written blob.
@@ -38,18 +38,18 @@ public protocol NIOSSHSignatureProtocol {
 }
 
 internal extension NIOSSHSignatureProtocol {
-    var signaturePrefix: String {
-        Self.signaturePrefix
+    var signaturePrefixes: [String] {
+        Self.signaturePrefixes
     }
 }
 
 public protocol NIOSSHPublicKeyProtocol {
-    /// An identifier that represents the type of public key used in an SSH packet.
-    /// This identifier MUST be unique to the public key implementation.
-    /// The returned value MUST NOT overlap with other public key implementations or a specifications that the public key does not implement.
-    static var publicKeyPrefix: String { get }
-
-    /// The raw reprentation of this publc key as a blob.
+    /// Identifiers that represent the types of public keys used in an SSH packet.
+    /// These identifiers MUST be unique to the public key implementation.
+    /// The returned values MUST NOT overlap with other public key implementations or specifications that the public key does not implement.
+    static var publicKeyPrefixes: [String] { get }
+    
+    /// The raw representation of this public key as a blob.
     var rawRepresentation: Data { get }
 
     /// Verifies that `signature` is the result of signing `data` using the private key that this public key is derived from.
@@ -64,17 +64,17 @@ public protocol NIOSSHPublicKeyProtocol {
 }
 
 internal extension NIOSSHPublicKeyProtocol {
-    var publicKeyPrefix: String {
-        Self.publicKeyPrefix
+    var publicKeyPrefixes: [String] {
+        Self.publicKeyPrefixes
     }
 }
 
 public protocol NIOSSHPrivateKeyProtocol {
-    /// An identifier that represents the type of private key used in an SSH packet.
-    /// This identifier MUST be unique to the private key implementation.
-    /// The returned value MUST NOT overlap with other private key implementations or a specifications that the private key does not implement.
-    static var keyPrefix: String { get }
-
+    /// Identifiers that represent the types of private keys used in an SSH packet.
+    /// These identifiers MUST be unique to the private key implementation.
+    /// The returned values MUST NOT overlap with other private key implementations or specifications that the private key does not implement.
+    static var keyPrefixes: [String] { get }
+    
     /// A public key instance that is able to verify signatures that are created using this private key.
     var publicKey: NIOSSHPublicKeyProtocol { get }
 
@@ -83,7 +83,7 @@ public protocol NIOSSHPrivateKeyProtocol {
 }
 
 internal extension NIOSSHPrivateKeyProtocol {
-    var keyPrefix: String {
-        Self.keyPrefix
+    var keyPrefixes: [String] {
+        Self.keyPrefixes
     }
 }

@@ -51,8 +51,8 @@ public struct NIOSSHPublicKey: Hashable {
         guard let key = try buffer.readSSHHostKey() else {
             throw NIOSSHError.invalidOpenSSHPublicKey(reason: "incomplete key data")
         }
-        guard key.keyPrefix.elementsEqual(keyIdentifier.utf8) else {
-            throw NIOSSHError.invalidOpenSSHPublicKey(reason: "inconsistent key type within openssh key format")
+        guard key.keyPrefixes.contains(where: { $0.elementsEqual(keyIdentifier.utf8) }) else {
+            throw NIOSSHError.invalidOpenSSHPublicKey(reason: "inconsistent key type within OpenSSH key format")
         }
         self = key
     }
@@ -181,20 +181,20 @@ extension NIOSSHPublicKey {
     /// The prefix of a P521 ECDSA public key.
     static let ecdsaP521PublicKeyPrefix = "ecdsa-sha2-nistp521".utf8
 
-    var keyPrefix: String.UTF8View {
+    var keyPrefixes: [String.UTF8View] {
         switch self.backingKey {
         case .ed25519:
-            return Self.ed25519PublicKeyPrefix
+            return [Self.ed25519PublicKeyPrefix]
         case .ecdsaP256:
-            return Self.ecdsaP256PublicKeyPrefix
+            return [Self.ecdsaP256PublicKeyPrefix]
         case .ecdsaP384:
-            return Self.ecdsaP384PublicKeyPrefix
+            return [Self.ecdsaP384PublicKeyPrefix]
         case .ecdsaP521:
-            return Self.ecdsaP521PublicKeyPrefix
+            return [Self.ecdsaP521PublicKeyPrefix]
         case .custom(let publicKey):
-            return publicKey.publicKeyPrefix.utf8
+            return publicKey.publicKeyPrefixes.map { $0.utf8 }
         case .certified(let base):
-            return base.keyPrefix
+            return base.keyPrefixes
         }
     }
 
@@ -203,7 +203,7 @@ extension NIOSSHPublicKey {
     ]
 
     static var knownAlgorithms: [String.UTF8View] {
-        bundledAlgorithms + customPublicKeyAlgorithms.map { $0.publicKeyPrefix.utf8 }
+        bundledAlgorithms + customPublicKeyAlgorithms.flatMap { $0.publicKeyPrefixes.map { $0.utf8 } }
     }
 
     static var customPublicKeyAlgorithms: [NIOSSHPublicKeyProtocol.Type] {
@@ -306,7 +306,7 @@ extension NIOSSHPublicKey.BackingKey: Equatable {
             return lhs.rawRepresentation == rhs.rawRepresentation
         case (.custom(let lhs), .custom(let rhs)):
             return
-                lhs.publicKeyPrefix == rhs.publicKeyPrefix &&
+                lhs.publicKeyPrefixes == rhs.publicKeyPrefixes &&
                 lhs.rawRepresentation == rhs.rawRepresentation
         case (.certified(let lhs), .certified(let rhs)):
             return lhs == rhs
@@ -338,7 +338,7 @@ extension NIOSSHPublicKey.BackingKey: Hashable {
             hasher.combine(pkey.rawRepresentation)
         case .custom(let pkey):
             hasher.combine(5)
-            hasher.combine(pkey.publicKeyPrefix)
+            hasher.combine(pkey.publicKeyPrefixes)
             hasher.combine(pkey.rawRepresentation)
         case .certified(let pkey):
             hasher.combine(6)
@@ -410,7 +410,7 @@ extension ByteBuffer {
     ///
     /// This is mostly used as part of the certified key structure.
     @discardableResult
-    mutating func writePublicKeyWithoutPrefix(_ key: NIOSSHPublicKey) -> Int {
+    mutating func writePublicKeyWithoutPrefix(_ key: NIOSSHPublicKey, prefix: String = "") -> Int {
         switch key.backingKey {
         case .ed25519(let key):
             return self.writeEd25519PublicKey(baseKey: key)
@@ -421,7 +421,7 @@ extension ByteBuffer {
         case .ecdsaP521(let key):
             return self.writeECDSAP521PublicKey(baseKey: key)
         case .custom(let key):
-            var writtenBytes = writeSSHString(key.publicKeyPrefix.utf8)
+            var writtenBytes = writeSSHString(prefix.utf8)
             writtenBytes += key.write(to: &self)
             return writtenBytes
         case .certified:
@@ -453,9 +453,11 @@ extension ByteBuffer {
                 return try buffer.readECDSAP521PublicKey()
             } else {
                 for type in NIOSSHPublicKey.customPublicKeyAlgorithms {
-                    if keyIdentifierBytes.elementsEqual(type.publicKeyPrefix.utf8) {
-                        let publicKey = try type.read(from: &buffer)
-                        return NIOSSHPublicKey(backingKey: .custom(publicKey))
+                    for prefix in type.publicKeyPrefixes {
+                        if keyIdentifierBytes.elementsEqual(prefix.utf8) {
+                            let publicKey = try type.read(from: &buffer)
+                            return NIOSSHPublicKey(backingKey: .custom(publicKey))
+                        }
                     }
                 }
 
