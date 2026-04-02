@@ -54,6 +54,7 @@ let package = Package(
         .target(
             name: "NIOSSH",
             dependencies: [
+                .product(name: "NIO", package: "swift-nio"),
                 .product(name: "NIOCore", package: "swift-nio"),
                 .product(name: "NIOConcurrencyHelpers", package: "swift-nio"),
                 .product(name: "NIOFoundationCompat", package: "swift-nio"),
