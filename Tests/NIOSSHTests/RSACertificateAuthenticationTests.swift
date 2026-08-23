@@ -31,6 +31,31 @@ final class RSACertificateAuthenticationTests: XCTestCase {
         super.tearDown()
     }
 
+    func testRepeatedRegistrationsAndSharedCertificateFormatRemainValid() {
+        TestRSAAlgorithms.registerSHA256()
+        TestRSAAlgorithms.registerSHA512Parser()
+        TestRSAAlgorithms.registerSHA512Parser()
+        NIOSSHAlgorithms.register(
+            publicKey: TestRSAPublicKey.self,
+            signature: TestRSALegacySignature.self
+        )
+        NIOSSHAlgorithms.register(
+            publicKey: TestRSAPublicKey.self,
+            signature: TestRSALegacySignature.self
+        )
+
+        let registrations = NIOSSHPublicKey.customPublicKeyAlgorithmRegistrations
+        XCTAssertEqual(registrations.count, 3)
+        XCTAssertEqual(
+            Set(registrations.compactMap { $0.userAuthenticationAlgorithm.certificate?.publicKeyPrefix }),
+            [TestRSAAlgorithms.certificatePublicKeyPrefix]
+        )
+        XCTAssertEqual(
+            Set(registrations.compactMap { $0.userAuthenticationAlgorithm.certificate?.name }),
+            [TestRSAAlgorithms.sha256Certificate, TestRSAAlgorithms.sha512Certificate]
+        )
+    }
+
     func testRSACertificateUsesCanonicalBlobWithExponentAndModulusDirectly() throws {
         let privateKey = try TestRSAPrivateKey()
         let certificate = try self.makeCertificate(for: privateKey)

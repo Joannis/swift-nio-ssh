@@ -229,9 +229,13 @@ extension NIOSSHPublicKey {
 /// the signature blob. The public-key and signature formats come from `NIOSSHPublicKeyProtocol` and
 /// `NIOSSHSignatureProtocol`; this value supplies the user-authentication name and, when supported,
 /// the certificate-specific names.
-public struct NIOSSHUserAuthenticationAlgorithm: Hashable, Sendable {
+///
+/// Canonical names and aliases occupy one global user-authentication namespace. A name may only be
+/// reused when it selects the same public-key format, plain or certificate form, and signature
+/// procedure.
+public struct NIOSSHUserAuthenticationAlgorithm: Hashable {
     /// The certificate form of a user-authentication algorithm.
-    public struct Certificate: Hashable, Sendable {
+    public struct Certificate: Hashable {
         /// The canonical identifier written inside a certificate public-key blob.
         public var publicKeyPrefix: String
 
@@ -272,10 +276,75 @@ public struct NIOSSHUserAuthenticationAlgorithm: Hashable, Sendable {
     }
 }
 
+#if swift(>=5.5)
+extension NIOSSHUserAuthenticationAlgorithm: Sendable {}
+extension NIOSSHUserAuthenticationAlgorithm.Certificate: Sendable {}
+#endif
+
 struct PublicKeyAlgorithmRegistration {
     var publicKey: NIOSSHPublicKeyProtocol.Type
     var signature: NIOSSHSignatureProtocol.Type
     var userAuthenticationAlgorithm: NIOSSHUserAuthenticationAlgorithm
+}
+
+enum UserAuthenticationPublicKeyForm: Hashable {
+    case plain
+    case certificate
+}
+
+enum UserAuthenticationAlgorithmParserIdentity: Hashable {
+    case bundledEd25519
+    case bundledECDSAP256
+    case bundledECDSAP384
+    case bundledECDSAP521
+    case custom(ObjectIdentifier)
+}
+
+/// The meaning assigned to a user-authentication algorithm name.
+struct UserAuthenticationAlgorithmBinding: Hashable {
+    var publicKeyParser: UserAuthenticationAlgorithmParserIdentity
+    var publicKeyPrefix: String
+    var publicKeyForm: UserAuthenticationPublicKeyForm
+    var signatureParser: UserAuthenticationAlgorithmParserIdentity
+    var signaturePrefix: String
+}
+
+struct NamedUserAuthenticationAlgorithmBinding {
+    var names: [String]
+    var binding: UserAuthenticationAlgorithmBinding
+}
+
+extension PublicKeyAlgorithmRegistration {
+    var namedUserAuthenticationAlgorithmBindings: [NamedUserAuthenticationAlgorithmBinding] {
+        var bindings = [
+            NamedUserAuthenticationAlgorithmBinding(
+                names: [self.userAuthenticationAlgorithm.name] + self.userAuthenticationAlgorithm.aliases,
+                binding: .init(
+                    publicKeyParser: .custom(ObjectIdentifier(self.publicKey)),
+                    publicKeyPrefix: self.publicKey.publicKeyPrefix,
+                    publicKeyForm: .plain,
+                    signatureParser: .custom(ObjectIdentifier(self.signature)),
+                    signaturePrefix: self.signature.signaturePrefix
+                )
+            )
+        ]
+
+        if let certificate = self.userAuthenticationAlgorithm.certificate {
+            bindings.append(
+                .init(
+                    names: [certificate.name] + certificate.aliases,
+                    binding: .init(
+                        publicKeyParser: .custom(ObjectIdentifier(self.publicKey)),
+                        publicKeyPrefix: certificate.publicKeyPrefix,
+                        publicKeyForm: .certificate,
+                        signatureParser: .custom(ObjectIdentifier(self.signature)),
+                        signaturePrefix: self.signature.signaturePrefix
+                    )
+                )
+            )
+        }
+        return bindings
+    }
 }
 
 struct ResolvedUserAuthenticationAlgorithm {
@@ -285,33 +354,9 @@ struct ResolvedUserAuthenticationAlgorithm {
 
 extension NIOSSHPublicKey {
     static func isKnownUserAuthenticationAlgorithm(_ name: String) -> Bool {
-        let bundledNames = [
-            String(Self.ed25519PublicKeyPrefix),
-            String(Self.ecdsaP256PublicKeyPrefix),
-            String(Self.ecdsaP384PublicKeyPrefix),
-            String(Self.ecdsaP521PublicKeyPrefix),
-            String(NIOSSHCertifiedPublicKey.ed25519KeyPrefix),
-            String(NIOSSHCertifiedPublicKey.p256KeyPrefix),
-            String(NIOSSHCertifiedPublicKey.p384KeyPrefix),
-            String(NIOSSHCertifiedPublicKey.p521KeyPrefix),
-        ]
-        if bundledNames.contains(name) {
-            return true
-        }
-
-        return self.customPublicKeyAlgorithmRegistrations.contains { registration in
-            let algorithm = registration.userAuthenticationAlgorithm
-            if algorithm.name == name
-                || algorithm.aliases.contains(name)
-            {
-                return true
-            }
-            guard let certificate = algorithm.certificate else {
-                return false
-            }
-            return certificate.name == name
-                || certificate.aliases.contains(name)
-        }
+        NIOSSHAlgorithms.userAuthenticationAlgorithmBindings(
+            for: self.customPublicKeyAlgorithmRegistrations
+        )?[name] != nil
     }
 
     func userAuthenticationAlgorithm(
@@ -477,23 +522,122 @@ extension NIOSSHPublicKey {
 }
 
 public enum NIOSSHAlgorithms {
-    private static let bundledPublicKeyBlobPrefixes: Set<String> = [
-        String(NIOSSHPublicKey.ed25519PublicKeyPrefix),
-        String(NIOSSHPublicKey.ecdsaP256PublicKeyPrefix),
-        String(NIOSSHPublicKey.ecdsaP384PublicKeyPrefix),
-        String(NIOSSHPublicKey.ecdsaP521PublicKeyPrefix),
-        String(NIOSSHCertifiedPublicKey.ed25519KeyPrefix),
-        String(NIOSSHCertifiedPublicKey.p256KeyPrefix),
-        String(NIOSSHCertifiedPublicKey.p384KeyPrefix),
-        String(NIOSSHCertifiedPublicKey.p521KeyPrefix),
+    private static let bundledUserAuthenticationAlgorithmBindings: [NamedUserAuthenticationAlgorithmBinding] = [
+        .init(
+            names: [String(NIOSSHPublicKey.ed25519PublicKeyPrefix)],
+            binding: .init(
+                publicKeyParser: .bundledEd25519,
+                publicKeyPrefix: String(NIOSSHPublicKey.ed25519PublicKeyPrefix),
+                publicKeyForm: .plain,
+                signatureParser: .bundledEd25519,
+                signaturePrefix: String(NIOSSHPublicKey.ed25519PublicKeyPrefix)
+            )
+        ),
+        .init(
+            names: [String(NIOSSHPublicKey.ecdsaP256PublicKeyPrefix)],
+            binding: .init(
+                publicKeyParser: .bundledECDSAP256,
+                publicKeyPrefix: String(NIOSSHPublicKey.ecdsaP256PublicKeyPrefix),
+                publicKeyForm: .plain,
+                signatureParser: .bundledECDSAP256,
+                signaturePrefix: String(NIOSSHPublicKey.ecdsaP256PublicKeyPrefix)
+            )
+        ),
+        .init(
+            names: [String(NIOSSHPublicKey.ecdsaP384PublicKeyPrefix)],
+            binding: .init(
+                publicKeyParser: .bundledECDSAP384,
+                publicKeyPrefix: String(NIOSSHPublicKey.ecdsaP384PublicKeyPrefix),
+                publicKeyForm: .plain,
+                signatureParser: .bundledECDSAP384,
+                signaturePrefix: String(NIOSSHPublicKey.ecdsaP384PublicKeyPrefix)
+            )
+        ),
+        .init(
+            names: [String(NIOSSHPublicKey.ecdsaP521PublicKeyPrefix)],
+            binding: .init(
+                publicKeyParser: .bundledECDSAP521,
+                publicKeyPrefix: String(NIOSSHPublicKey.ecdsaP521PublicKeyPrefix),
+                publicKeyForm: .plain,
+                signatureParser: .bundledECDSAP521,
+                signaturePrefix: String(NIOSSHPublicKey.ecdsaP521PublicKeyPrefix)
+            )
+        ),
+        .init(
+            names: [String(NIOSSHCertifiedPublicKey.ed25519KeyPrefix)],
+            binding: .init(
+                publicKeyParser: .bundledEd25519,
+                publicKeyPrefix: String(NIOSSHCertifiedPublicKey.ed25519KeyPrefix),
+                publicKeyForm: .certificate,
+                signatureParser: .bundledEd25519,
+                signaturePrefix: String(NIOSSHPublicKey.ed25519PublicKeyPrefix)
+            )
+        ),
+        .init(
+            names: [String(NIOSSHCertifiedPublicKey.p256KeyPrefix)],
+            binding: .init(
+                publicKeyParser: .bundledECDSAP256,
+                publicKeyPrefix: String(NIOSSHCertifiedPublicKey.p256KeyPrefix),
+                publicKeyForm: .certificate,
+                signatureParser: .bundledECDSAP256,
+                signaturePrefix: String(NIOSSHPublicKey.ecdsaP256PublicKeyPrefix)
+            )
+        ),
+        .init(
+            names: [String(NIOSSHCertifiedPublicKey.p384KeyPrefix)],
+            binding: .init(
+                publicKeyParser: .bundledECDSAP384,
+                publicKeyPrefix: String(NIOSSHCertifiedPublicKey.p384KeyPrefix),
+                publicKeyForm: .certificate,
+                signatureParser: .bundledECDSAP384,
+                signaturePrefix: String(NIOSSHPublicKey.ecdsaP384PublicKeyPrefix)
+            )
+        ),
+        .init(
+            names: [String(NIOSSHCertifiedPublicKey.p521KeyPrefix)],
+            binding: .init(
+                publicKeyParser: .bundledECDSAP521,
+                publicKeyPrefix: String(NIOSSHCertifiedPublicKey.p521KeyPrefix),
+                publicKeyForm: .certificate,
+                signatureParser: .bundledECDSAP521,
+                signaturePrefix: String(NIOSSHPublicKey.ecdsaP521PublicKeyPrefix)
+            )
+        ),
     ]
 
-    private static let bundledSignaturePrefixes: Set<String> = [
-        "ssh-ed25519",
-        "ecdsa-sha2-nistp256",
-        "ecdsa-sha2-nistp384",
-        "ecdsa-sha2-nistp521",
-    ]
+    private static let bundledPublicKeyBlobPrefixes = Set(
+        Self.bundledUserAuthenticationAlgorithmBindings.map { $0.binding.publicKeyPrefix }
+    )
+
+    private static let bundledSignaturePrefixes = Set(
+        Self.bundledUserAuthenticationAlgorithmBindings.map { $0.binding.signaturePrefix }
+    )
+
+    static func validatedUserAuthenticationAlgorithmBindings(
+        customBindings: [NamedUserAuthenticationAlgorithmBinding]
+    ) -> [String: UserAuthenticationAlgorithmBinding]? {
+        var bindings: [String: UserAuthenticationAlgorithmBinding] = [:]
+        for namedBinding in Self.bundledUserAuthenticationAlgorithmBindings + customBindings {
+            guard !namedBinding.names.isEmpty, !namedBinding.names.contains("") else {
+                return nil
+            }
+            for name in namedBinding.names {
+                if let existingBinding = bindings[name], existingBinding != namedBinding.binding {
+                    return nil
+                }
+                bindings[name] = namedBinding.binding
+            }
+        }
+        return bindings
+    }
+
+    static func userAuthenticationAlgorithmBindings(
+        for registrations: [PublicKeyAlgorithmRegistration]
+    ) -> [String: UserAuthenticationAlgorithmBinding]? {
+        Self.validatedUserAuthenticationAlgorithmBindings(
+            customBindings: registrations.flatMap { $0.namedUserAuthenticationAlgorithmBindings }
+        )
+    }
 
     public static func register(keyExchangeAlgorithm type: NIOSSHKeyExchangeAlgorithmProtocol.Type) {
         _CustomAlgorithms.keyExchangeAlgorithmsLock.withLockVoid {
@@ -539,6 +683,11 @@ public enum NIOSSHAlgorithms {
             let publicKeyTypeIdentifier = ObjectIdentifier(type)
             let signatureTypeIdentifier = ObjectIdentifier(signature)
             let signaturePrefix = Signature.signaturePrefix
+            let newRegistration = PublicKeyAlgorithmRegistration(
+                publicKey: type,
+                signature: signature,
+                userAuthenticationAlgorithm: userAuthenticationAlgorithm
+            )
             precondition(
                 !signaturePrefix.isEmpty && !Self.bundledSignaturePrefixes.contains(signaturePrefix),
                 "Custom signature identifiers must be non-empty and must not overlap bundled algorithms"
@@ -591,24 +740,12 @@ public enum NIOSSHAlgorithms {
                     && plainAuthenticationNames.isDisjoint(with: certificateAuthenticationNames),
                 "Plain and certificate user-authentication identifiers must be non-empty and distinct"
             )
-            for registration in _CustomAlgorithms.publicKeyAlgorithmRegistrations
-            where ObjectIdentifier(registration.publicKey) == publicKeyTypeIdentifier
-                && registration.signature.signaturePrefix != signaturePrefix
-            {
-                let registeredPlainNames = Set(
-                    [registration.userAuthenticationAlgorithm.name]
-                        + registration.userAuthenticationAlgorithm.aliases
-                )
-                let registeredCertificateNames = Set(
-                    [registration.userAuthenticationAlgorithm.certificate?.name].compactMap { $0 }
-                        + (registration.userAuthenticationAlgorithm.certificate?.aliases ?? [])
-                )
-                precondition(
-                    plainAuthenticationNames.isDisjoint(with: registeredPlainNames)
-                        && certificateAuthenticationNames.isDisjoint(with: registeredCertificateNames),
-                    "A user-authentication identifier cannot select multiple signature algorithms"
-                )
-            }
+            precondition(
+                Self.userAuthenticationAlgorithmBindings(
+                    for: _CustomAlgorithms.publicKeyAlgorithmRegistrations + [newRegistration]
+                ) != nil,
+                "A user-authentication identifier must resolve to one key format, key form, and signature algorithm"
+            )
 
             if let certificatePrefix = userAuthenticationAlgorithm.certificate?.publicKeyPrefix {
                 let registeredPrefixes = _CustomAlgorithms.publicKeyAlgorithmRegistrations.compactMap { registration -> String? in
@@ -628,13 +765,7 @@ public enum NIOSSHAlgorithms {
                     && registration.userAuthenticationAlgorithm == userAuthenticationAlgorithm
             }
             if !alreadyRegistered {
-                _CustomAlgorithms.publicKeyAlgorithmRegistrations.append(
-                    .init(
-                        publicKey: type,
-                        signature: signature,
-                        userAuthenticationAlgorithm: userAuthenticationAlgorithm
-                    )
-                )
+                _CustomAlgorithms.publicKeyAlgorithmRegistrations.append(newRegistration)
             }
         }
     }

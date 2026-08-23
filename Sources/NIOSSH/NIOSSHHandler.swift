@@ -77,8 +77,10 @@ public final class NIOSSHHandler {
     }
 }
 
+#if swift(>=5.5)
 @available(*, unavailable)
 extension NIOSSHHandler: Sendable {}
+#endif
 
 extension NIOSSHHandler {
     enum PendingGlobalRequestResponse {
