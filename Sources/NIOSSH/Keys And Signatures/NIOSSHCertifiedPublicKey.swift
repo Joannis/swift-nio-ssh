@@ -14,6 +14,11 @@
 
 import Crypto
 import Foundation
+
+#if canImport(CDispatch)
+import CDispatch
+#endif
+
 import NIOCore
 
 /// A `NIOSSHCertifiedPublicKey` is an SSH public key combined with an SSH certificate.
