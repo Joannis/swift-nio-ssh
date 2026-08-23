@@ -76,6 +76,26 @@ public struct NIOSSHPrivateKey {
         #endif
         }
     }
+
+    /// The identifier used to select the user-authentication algorithm mapping.
+    internal var userAuthenticationAlgorithmIdentifier: String {
+        switch self.backingKey {
+        case .ed25519:
+            return "ssh-ed25519"
+        case .ecdsaP256:
+            return "ecdsa-sha2-nistp256"
+        case .ecdsaP384:
+            return "ecdsa-sha2-nistp384"
+        case .ecdsaP521:
+            return "ecdsa-sha2-nistp521"
+        case .custom(let key):
+            return key.userAuthenticationAlgorithmIdentifier
+        #if canImport(Darwin)
+        case .secureEnclaveP256:
+            return "ecdsa-sha2-nistp256"
+        #endif
+        }
+    }
 }
 
 extension NIOSSHPrivateKey {
@@ -147,7 +167,7 @@ extension NIOSSHPrivateKey {
             let signature = try key.signature(for: payload.bytes.readableBytesView)
             return NIOSSHSignature(backingSignature: .ecdsaP521(signature))
         case .custom(let key):
-            let signature = try key.signature(for: payload.bytes.readableBytesView)
+            let signature = try key.userAuthenticationSignature(for: payload.bytes.readableBytesView)
             return NIOSSHSignature(backingSignature: .custom(signature))
         #if canImport(Darwin)
         case .secureEnclaveP256(let key):

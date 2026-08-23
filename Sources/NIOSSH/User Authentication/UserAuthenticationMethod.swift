@@ -207,14 +207,31 @@ extension SSHMessage.UserAuthRequestMessage {
 
         switch request.offer {
         case .privateKey(let privateKeyRequest):
+            guard let authenticationAlgorithm = privateKeyRequest.publicKey.userAuthenticationAlgorithm(
+                forAlgorithmIdentifier: privateKeyRequest.privateKey.userAuthenticationAlgorithmIdentifier
+            ) else {
+                throw NIOSSHError.unknownSignature(
+                    algorithm: privateKeyRequest.privateKey.userAuthenticationAlgorithmIdentifier
+                )
+            }
             let dataToSign = UserAuthSignablePayload(
                 sessionIdentifier: sessionID,
                 userName: self.username,
                 serviceName: self.service,
+                authenticationAlgorithm: authenticationAlgorithm.name,
                 publicKey: privateKeyRequest.publicKey
             )
             let signature = try privateKeyRequest.privateKey.sign(dataToSign)
-            self.method = .publicKey(.known(key: privateKeyRequest.publicKey, signature: signature))
+            guard signature.signaturePrefix == authenticationAlgorithm.signaturePrefix else {
+                throw NIOSSHError.invalidUserAuthSignature
+            }
+            self.method = .publicKey(
+                .known(
+                    authenticationAlgorithm: authenticationAlgorithm.name,
+                    key: privateKeyRequest.publicKey,
+                    signature: signature
+                )
+            )
         case .password(let passwordRequest):
             self.method = .password(passwordRequest.password)
         case .hostBased:
