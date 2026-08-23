@@ -97,6 +97,7 @@ let package = Package(
                 .product(name: "NIOCore", package: "swift-nio"),
                 .product(name: "NIOEmbedded", package: "swift-nio"),
                 .product(name: "NIOFoundationCompat", package: "swift-nio"),
+                .product(name: "NIOPosix", package: "swift-nio"),
             ],
             swiftSettings: strictConcurrencySettings
         ),

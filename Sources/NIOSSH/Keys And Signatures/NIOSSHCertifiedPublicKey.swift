@@ -13,18 +13,8 @@
 //===----------------------------------------------------------------------===//
 
 import Crypto
-import Dispatch
 import Foundation
 import NIOCore
-#if canImport(Darwin)
-import Darwin
-#elseif canImport(Glibc)
-import Glibc
-#elseif canImport(Musl)
-import Musl
-#elseif canImport(Bionic)
-import Bionic
-#endif
 
 /// A `NIOSSHCertifiedPublicKey` is an SSH public key combined with an SSH certificate.
 ///
@@ -295,12 +285,12 @@ extension NIOSSHCertifiedPublicKey {
             throw NIOSSHError.invalidCertificate(diagnostics: "Certificate is not valid for this principal")
         }
 
-        // This can only be negative if we're in a terribly misconfigured system, so we can safely just turn this directly
-        // into a UInt64.
-        let now = DispatchWallTime.now()
-        let validAfter = DispatchWallTime(secondsSinceEpoch: self.validAfter)
-        let validBefore = DispatchWallTime(secondsSinceEpoch: self.validBefore)
-        guard validAfter <= now, validBefore > now else {
+        let secondsSinceEpoch = Date().timeIntervalSince1970
+        guard secondsSinceEpoch >= 0, secondsSinceEpoch < TimeInterval(UInt64.max) else {
+            throw NIOSSHError.invalidCertificate(diagnostics: "System clock is outside the supported range")
+        }
+        let now = UInt64(secondsSinceEpoch)
+        guard self.validAfter <= now, self.validBefore > now else {
             throw NIOSSHError.invalidCertificate(diagnostics: "Certificate is no longer valid")
         }
 
@@ -340,7 +330,10 @@ extension NIOSSHCertifiedPublicKey {
         case .certified:
             preconditionFailure("base key cannot be certified")
         case .custom(let custom):
-            return custom.publicKeyPrefix.utf8
+            guard let prefix = NIOSSHPublicKey.certificatePublicKeyPrefix(for: custom) else {
+                preconditionFailure("custom public key was not registered with a certificate format")
+            }
+            return prefix.utf8
         }
     }
 
@@ -366,7 +359,11 @@ extension NIOSSHCertifiedPublicKey {
         } else if prefix.elementsEqual(Self.p521KeyPrefix) {
             return NIOSSHPublicKey.ecdsaP521PublicKeyPrefix
         } else {
-            throw NIOSSHError.unknownPublicKey(algorithm: String(decoding: prefix, as: UTF8.self))
+            let prefixString = String(decoding: prefix, as: UTF8.self)
+            if let basePrefix = NIOSSHPublicKey.basePublicKeyPrefix(forCertificatePublicKeyPrefix: prefixString) {
+                return basePrefix.utf8
+            }
+            throw NIOSSHError.unknownPublicKey(algorithm: prefixString)
         }
     }
 }
@@ -460,6 +457,12 @@ extension NIOSSHCertifiedPublicKey {
                 if case .certified = newValue.backingKey {
                     preconditionFailure("Certificate may not use certified key as public key")
                 }
+                if case .custom(let customKey) = newValue.backingKey {
+                    precondition(
+                        NIOSSHPublicKey.certificatePublicKeyPrefix(for: customKey) != nil,
+                        "Custom public key must be registered with a certificate format"
+                    )
+                }
             }
         }
 
@@ -498,6 +501,13 @@ extension NIOSSHCertifiedPublicKey {
             }
             if case .certified = signatureKey.backingKey {
                 throw NIOSSHError.invalidCertificate(diagnostics: "Certificate may not be signed by certified key")
+            }
+            if case .custom(let customKey) = key.backingKey,
+                NIOSSHPublicKey.certificatePublicKeyPrefix(for: customKey) == nil
+            {
+                throw NIOSSHError.invalidCertificate(
+                    diagnostics: "Custom public key was not registered with a certificate format"
+                )
             }
 
             self.nonce = nonce
@@ -729,12 +739,5 @@ extension ByteBuffer {
         }
 
         return map
-    }
-}
-
-extension DispatchWallTime {
-    init(secondsSinceEpoch: UInt64) {
-        let t = timespec(tv_sec: time_t(secondsSinceEpoch), tv_nsec: 0)
-        self = DispatchWallTime(timespec: t)
     }
 }

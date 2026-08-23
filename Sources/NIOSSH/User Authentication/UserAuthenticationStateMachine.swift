@@ -406,9 +406,21 @@ private extension UserAuthenticationStateMachine {
                 .init(outcome, supportedMethods: supportedMethods)
             }
 
-        case .publicKey(.known(key: let key, signature: .some(let signature))):
+        case .publicKey(
+            .known(
+                authenticationAlgorithm: let authenticationAlgorithm,
+                key: let key,
+                signature: .some(let signature)
+            )
+        ):
             // This is a direct request to auth, just pass it through.
-            let dataToSign = UserAuthSignablePayload(sessionIdentifier: sessionID, userName: request.username, serviceName: request.service, publicKey: key)
+            let dataToSign = UserAuthSignablePayload(
+                sessionIdentifier: sessionID,
+                userName: request.username,
+                serviceName: request.service,
+                authenticationAlgorithm: authenticationAlgorithm,
+                publicKey: key
+            )
             let supportedMethods = delegate.supportedAuthenticationMethods
 
             guard key.isValidSignature(signature, for: dataToSign) else {
@@ -451,7 +463,13 @@ private extension UserAuthenticationStateMachine {
                 .init(outcome, supportedMethods: supportedMethods)
             }
 
-        case .publicKey(.known(key: let key, signature: .none)):
+        case .publicKey(
+            .known(
+                authenticationAlgorithm: let authenticationAlgorithm,
+                key: let key,
+                signature: .none
+            )
+        ):
             // This is a weird wrinkle in public key auth: it's a request to ask whether a given key is valid, but not to validate that key itself.
             // For certificates, we should validate them before saying they're OK
             if let certifiedKey = NIOSSHCertifiedPublicKey(key),
@@ -466,14 +484,22 @@ private extension UserAuthenticationStateMachine {
                         acceptableCriticalOptions: config.acceptableCriticalOptions
                     )
                     // Certificate is valid
-                    return self.loop.makeSucceededFuture(.publicKeyOK(.init(key: key)))
+                    return self.loop.makeSucceededFuture(
+                        .publicKeyOK(
+                            .init(authenticationAlgorithm: authenticationAlgorithm, key: key)
+                        )
+                    )
                 } catch {
                     // Certificate validation failed, reject it
                     return self.loop.makeSucceededFuture(.failure(.init(authentications: delegate.supportedAuthenticationMethods.strings, partialSuccess: false)))
                 }
             }
             // For now we do a shortcut: we just say that all non-certificate keys are acceptable, rather than ask the delegate.
-            return self.loop.makeSucceededFuture(.publicKeyOK(.init(key: key)))
+            return self.loop.makeSucceededFuture(
+                .publicKeyOK(
+                    .init(authenticationAlgorithm: authenticationAlgorithm, key: key)
+                )
+            )
 
         case .publicKey(.unknown):
             // We don't known the algorithm, the auth attempt has failed.
