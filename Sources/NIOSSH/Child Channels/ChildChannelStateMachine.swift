@@ -590,6 +590,25 @@ extension ChildChannelStateMachine {
     }
 
     /// Whether `Channel.isActive` should be true.
+    /// Whether a channel window adjust may still be sent.
+    ///
+    /// Deliberately narrower than `isActiveOnChannel`, which stays true after a
+    /// close has been sent so that buffered reads can still be delivered to the
+    /// pipeline. Delivering a read and replenishing the peer's window are not
+    /// the same permission: the first is about not losing data we already have,
+    /// the second writes a new message to a channel the peer may consider gone.
+    ///
+    /// The states here are exactly those `sendChannelWindowAdjust` accepts, and
+    /// must stay that way — every other state traps there.
+    var canSendWindowAdjust: Bool {
+        switch self.state {
+        case .active, .halfClosedLocal, .halfClosedRemote, .quiescent:
+            return true
+        case .idle, .requestedLocally, .requestedRemotely, .closedLocally, .closedRemotely, .closed:
+            return false
+        }
+    }
+
     var isActiveOnChannel: Bool {
         switch self.state {
         case .active, .halfClosedLocal, .halfClosedRemote, .quiescent, .closedLocally, .closedRemotely:
